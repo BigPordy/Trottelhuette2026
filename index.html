@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hitster – Runde 1</title>
+  <title>Hitster – Autofahrt</title>
 
   <style>
     body {
@@ -32,8 +32,15 @@
       border:none;
       border-radius:999px;
       padding:0.5rem 1rem;
-      font-size:1.2rem;
+      font-size:1.1rem;
       cursor:pointer;
+    }
+
+    .roundswitch {
+      display:flex;
+      justify-content:center;
+      gap:0.5rem;
+      margin-bottom:0.75rem;
     }
 
     .controls {
@@ -70,8 +77,15 @@
 
 <body>
 <div class="card">
-  <h2>🎵 Hitster – Runde 1</h2>
-  <p>Titel &amp; Interpret erraten</p>
+
+  <!-- RUNDEN SWITCH -->
+  <div class="roundswitch">
+    <button id="btnRound1" onclick="switchRound(0)">🎵 Runde 1</button>
+    <button id="btnRound2" onclick="switchRound(1)">🎬 Runde 2</button>
+  </div>
+
+  <h2 id="roundTitle">🎵 Runde 1 – Hitster</h2>
+  <p id="questionText">Titel &amp; Interpret erraten</p>
 
   <audio id="player"></audio>
 
@@ -92,12 +106,14 @@
     Song <span id="songNr">1</span> / <span id="songTotal">15</span>
   </div>
 
-  <div class="hint">Runde 1 – Autofahrt</div>
+  <div class="hint">Autofahrt – frei zwischen Runden wechseln</div>
 </div>
 
 <script>
-/* ===== EXAKTE TRACKLISTE (DEINE DATEINAMEN) ===== */
-const tracks = [
+/* ===== TRACKLISTEN ===== */
+
+// ✅ Runde 1 – Musik
+const round1Tracks = [
   "audio/01_fuer_elise.mp3",
   "audio/02_vivaldi_fruehling.mp3",
   "audio/03_mozart_nachtmusik.mp3",
@@ -114,61 +130,115 @@ const tracks = [
   "audio/14_grieg_morgenstimmung.mp3",
   "audio/15_strauss_donauwalser.mp3"
 ];
-let index = 0;
 
+// ✅ Runde 2 – Filmmusik
+const round2Tracks = [
+  "audio-round2/01_forrest_gump.mp3",
+  "audio-round2/02_8mile.mp3",
+  "audio-round2/03_amelie.mp3",
+  "audio-round2/04_harry_potter.mp3",
+  "audio-round2/05_godfather.mp3",
+  "audio-round2/06_fight_club.mp3",
+  "audio-round2/07_intouchables.mp3",
+  "audio-round2/08_interstellar.mp3",
+  "audio-round2/09_schindlers_list.mp3",
+  "audio-round2/10_inception.mp3",
+  "audio-round2/11_theoffice.mp3",
+  "audio-round2/12_requiem_for_a_dream.mp3",
+  "audio-round2/13_stunde_des_siegers.mp3",
+  "audio-round2/14_batman_begins.mp3",
+  "audio-round2/15_barbie.mp3",
+  "audio-round2/16_sherlock_holmes.mp3"
+];
+
+const rounds = [
+  { name:"🎵 Runde 1 – Hitster", question:"Titel & Interpret erraten", tracks: round1Tracks },
+  { name:"🎬 Runde 2 – Filmmusik", question:"Aus welchem Film?", tracks: round2Tracks }
+];
+
+let roundIndex = 0;
+let trackIndex = 0;
+
+/* ===== ELEMENTE ===== */
 const audio = document.getElementById("player");
 const progress = document.getElementById("progress");
 const currentEl = document.getElementById("current");
 const remainingEl = document.getElementById("remaining");
 const songNrEl = document.getElementById("songNr");
 const songTotalEl = document.getElementById("songTotal");
+const titleEl = document.getElementById("roundTitle");
+const questionEl = document.getElementById("questionText");
 
-songTotalEl.textContent = tracks.length;
-
-function formatTime(sec) {
-  sec = Math.max(0, Math.floor(sec));
-  return `${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;
+/* ===== HILFE ===== */
+function formatTime(s){
+  s = Math.max(0, Math.floor(s));
+  return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 }
 
-function loadTrack() {
-  audio.src = tracks[index];
+/* ===== PLAYER ===== */
+function loadTrack(){
+  const round = rounds[roundIndex];
+  audio.src = round.tracks[trackIndex];
   audio.load();
+
+  titleEl.textContent = round.name;
+  questionEl.textContent = round.question;
+  songNrEl.textContent = trackIndex + 1;
+  songTotalEl.textContent = round.tracks.length;
+
   progress.value = 0;
   currentEl.textContent = "00:00";
   remainingEl.textContent = "00:00";
-  songNrEl.textContent = index + 1;
+  highlightRoundButtons();
 }
 
-function toggle() {
+function toggle(){
   audio.paused ? audio.play() : audio.pause();
 }
 
-function next() {
-  index = (index + 1) % tracks.length;
+function next(){
+  const round = rounds[roundIndex];
+  trackIndex = (trackIndex + 1) % round.tracks.length;
   loadTrack();
   audio.play();
 }
 
-function prev() {
-  if (index > 0) index--;
+function prev(){
+  if(trackIndex > 0) trackIndex--;
   loadTrack();
   audio.play();
 }
 
-audio.ontimeupdate = () => {
-  if (!isNaN(audio.duration)) {
-    progress.value = audio.currentTime / audio.duration * 100;
+/* ===== RUNDE SWITCH ===== */
+function switchRound(idx){
+  if(roundIndex === idx) return;
+  audio.pause();
+  roundIndex = idx;
+  trackIndex = 0;
+  loadTrack();
+}
+
+function highlightRoundButtons(){
+  document.getElementById("btnRound1").style.opacity = roundIndex === 0 ? "1" : "0.5";
+  document.getElementById("btnRound2").style.opacity = roundIndex === 1 ? "1" : "0.5";
+}
+
+/* ===== ZEIT ===== */
+audio.ontimeupdate = ()=>{
+  if(!isNaN(audio.duration)){
+    progress.value = (audio.currentTime / audio.duration) * 100;
     currentEl.textContent = formatTime(audio.currentTime);
     remainingEl.textContent = formatTime(audio.duration - audio.currentTime);
   }
 };
 
-progress.oninput = () => {
-  if (!isNaN(audio.duration)) {
+progress.oninput = ()=>{
+  if(!isNaN(audio.duration)){
     audio.currentTime = audio.duration * (progress.value / 100);
   }
 };
 
+/* ===== INIT ===== */
 loadTrack();
 </script>
 </body>
