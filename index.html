@@ -54,6 +54,12 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .songindex {
+      margin-top:0.25rem;
+      font-size:0.9rem;
+      opacity:0.7;
+    }
+
     .hint {
       margin-top:0.75rem;
       font-size:0.8rem;
@@ -83,28 +89,48 @@
     <span id="remaining">00:00</span>
   </div>
 
+  <div class="songindex">
+    Song <span id="songNr">1</span> / <span id="songTotal">15</span>
+  </div>
+
   <div class="hint">
     Runde 1 – Autofahrt
   </div>
 </div>
 
 <script>
-/* ===== TRACKS ===== */
+/* ===== TRACKLISTE (Runde 1 – 15 Songs) ===== */
 const tracks = [
   "audio/01_fuer_elise.mp3",
   "audio/02_vivaldi_fruehling.mp3",
-  "audio/03_mozart_nachtmusik.mp3"
-  // später bis 15 erweitern
+  "audio/03_mozart_nachtmusik.mp3",
+  "audio/04_verdi_la_donna.mp3",
+  "audio/05_tschaikowski_schwanensee.mp3",
+  "audio/06_wagner_walkuerenritt.mp3",
+  "audio/07_beethoven_5.mp3",
+  "audio/08_bach_air.mp3",
+  "audio/09_mozart_nachtmusik.mp3",
+  "audio/10_pachelbel_kanon.mp3",
+  "audio/11_mozart_tuerkischer_marsch.mp3",
+  "audio/12_orff_o_fortuna.mp3",
+  "audio/13_bizet_carmen.mp3",
+  "audio/14_grieg_morgenstimmung.mp3",
+  "audio/15_strauss_blaue_donau.mp3"
 ];
 
+/* ===== STATE ===== */
 let index = 0;
 
 const audio = document.getElementById("player");
 const progress = document.getElementById("progress");
 const currentEl = document.getElementById("current");
 const remainingEl = document.getElementById("remaining");
+const songNrEl = document.getElementById("songNr");
+const songTotalEl = document.getElementById("songTotal");
 
-/* ===== HILFSFUNKTION ===== */
+songTotalEl.textContent = tracks.length;
+
+/* ===== HELFER ===== */
 function formatTime(seconds) {
   seconds = Math.max(0, Math.floor(seconds));
   const m = String(Math.floor(seconds / 60)).padStart(2,"0");
@@ -116,9 +142,10 @@ function formatTime(seconds) {
 function loadTrack() {
   audio.src = tracks[index];
   audio.load();
+  progress.value = 0;
   currentEl.textContent = "00:00";
   remainingEl.textContent = "00:00";
-  progress.value = 0;
+  songNrEl.textContent = index + 1;
 }
 
 function toggle() {
@@ -126,13 +153,19 @@ function toggle() {
 }
 
 function next() {
-  index = (index + 1) % tracks.length;
+  if (index < tracks.length - 1) {
+    index++;
+  } else {
+    index = 0; // bewusst wieder von vorne (Autofahrt)
+  }
   loadTrack();
   audio.play();
 }
 
 function prev() {
-  index = (index - 1 + tracks.length) % tracks.length;
+  if (index > 0) {
+    index--;
+  }
   loadTrack();
   audio.play();
 }
