@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hitster – Live (Phase B / Schritt 1)</title>
+<title>Hitster – Live (Phase B)</title>
 
 <!-- ✅ Supabase korrekt einbinden -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -27,57 +27,64 @@ body {
 }
 
 .card {
-  background: #1f2937;
-  padding: 2rem;
-  border-radius: 16px;
-  width: 360px;
-  text-align: center;
+  background:#1f2937;
+  padding:2rem;
+  border-radius:16px;
+  width:360px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 
-/* Form */
 input {
-  width: 100%;
-  padding: 0.6rem;
-  margin-top: 1rem;
-  border-radius: 6px;
-  border: none;
+  width:100%;
+  padding:0.6rem;
+  margin-top:1rem;
+  border-radius:6px;
+  border:none;
+  font-size:1rem;
 }
 
 button {
-  margin-top: 1.5rem;
-  padding: 0.7rem 1.4rem;
-  border-radius: 999px;
-  border: none;
-  background: #2563eb;
-  color: white;
-  font-size: 1rem;
-  cursor: pointer;
+  margin-top:1.6rem;
+  padding:0.7rem 1.5rem;
+  border-radius:999px;
+  border:none;
+  background:#2563eb;
+  color:white;
+  font-size:1rem;
+  cursor:pointer;
+}
+
+button:active {
+  transform: scale(0.98);
 }
 
 .error {
-  margin-top: 0.75rem;
-  color: #fca5a5;
-  font-size: 0.9rem;
+  margin-top:0.75rem;
+  color:#fca5a5;
+  font-size:0.9rem;
 }
 </style>
 </head>
 
 <body>
 
-<!-- START -->
+<!-- STARTSCREEN -->
 <div id="startScreen" class="screen">
   <div class="card">
     <h2>👥 Team anmelden</h2>
 
-    <input id="teamNameInput" placeholder="Teamname eingeben" />
+    <input id="teamNameInput" placeholder="Teamname eingeben">
 
-    <button onclick="startGame()">Spiel starten</button>
+    <button id="startBtn" type="button">
+      Spiel starten
+    </button>
 
     <div id="startError" class="error"></div>
   </div>
 </div>
 
-<!-- PLAYER (Dummy, nur zur Bestätigung) -->
+<!-- PLAYER (Bestätigung) -->
 <div id="playerScreen" class="screen" style="display:none;">
   <div class="card">
     <h2>✅ Team ist live</h2>
@@ -87,43 +94,53 @@ button {
 </div>
 
 <script>
-/* ✅ Supabase Client */
-const supabase = window.supabase.createClient(
-  "https://havaoqxnxnlmyfbldyic.supabase.co",
-  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
-);
+document.addEventListener("DOMContentLoaded", () => {
 
-let teamId = null;
+  /* ✅ Supabase Client */
+  const supabase = window.supabase.createClient(
+    "https://havaoqxnxnlmyfbldyic.supabase.co",
+    "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+  );
 
-/* ✅ Start Game: Team anlegen */
-async function startGame() {
-  const name = teamNameInput.value.trim();
-  startError.textContent = "";
+  const startBtn = document.getElementById("startBtn");
+  const teamInput = document.getElementById("teamNameInput");
+  const startError = document.getElementById("startError");
+  const startScreen = document.getElementById("startScreen");
+  const playerScreen = document.getElementById("playerScreen");
+  const teamInfo = document.getElementById("teamInfo");
 
-  if (!name) {
-    startError.textContent = "Bitte Teamnamen eingeben";
-    return;
-  }
+  let teamId = null;
 
-  const { data, error } = await supabase
-    .from("teams")
-    .insert({ name })
-    .select()
-    .single();
+  /* ✅ Klick-Handler */
+  startBtn.addEventListener("click", async () => {
+    startError.textContent = "";
 
-  if (error) {
-    console.error(error);
-    startError.textContent = "Fehler beim Anlegen des Teams";
-    return;
-  }
+    const name = teamInput.value.trim();
+    if (!name) {
+      startError.textContent = "Bitte Teamnamen eingeben";
+      return;
+    }
 
-  teamId = data.id;
+    const { data, error } = await supabase
+      .from("teams")
+      .insert({ name })
+      .select()
+      .single();
 
-  // ✅ UI wechseln
-  startScreen.style.display = "none";
-  playerScreen.style.display = "flex";
-  teamInfo.textContent = "Team-ID: " + teamId;
-}
+    if (error) {
+      console.error(error);
+      startError.textContent = "Fehler beim Erstellen des Teams";
+      return;
+    }
+
+    teamId = data.id;
+
+    startScreen.style.display = "none";
+    playerScreen.style.display = "flex";
+    teamInfo.textContent = "Team-ID: " + teamId;
+  });
+
+});
 </script>
 
 </body>
