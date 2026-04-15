@@ -20,64 +20,138 @@
     .card {
       width: 360px;
       padding: 1.5rem;
-      border-radius: 16px;
+      border-radius: 18px;
       background: #1f2937;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
       text-align: center;
     }
 
-    .player-wrapper {
+    .player-shell {
       position: relative;
       margin-top: 1rem;
       border-radius: 12px;
       overflow: hidden;
+      height: 90px;
+      background: #1f2937;
     }
 
     iframe {
       width: 100%;
-      height: 90px; /* Deezer Track Widget */
+      height: 90px;
       border: none;
     }
 
-    /* ✅ Maske: verdeckt ALLES oberhalb der Controls */
-    .mask {
+    /* ✅ ABSOLUTE BLOCK-MASKE */
+    .blocker {
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 55px; /* feinjustierbar */
+      bottom: 0;
       background: #1f2937;
+      pointer-events: auto;
+    }
+
+    /* ✅ NUR HIER DARF GEKLICKT WERDEN */
+    .control-hole {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 32px; /* exakt Control-Leiste */
+      background: transparent;
       pointer-events: none;
     }
 
-    .hint {
+    /* Lochausschnitt */
+    .blocker::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 32px;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
       margin-top: 1rem;
-      font-size: 0.85rem;
-      opacity: 0.7;
+    }
+
+    .nav button {
+      background: #0f172a;
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .hint {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      opacity: 0.6;
     }
   </style>
 </head>
 
 <body>
   <div class="card">
-    <h2>🎵 Hitster – Runde 1</h2>
+    <h2>🎵 Hitster – Runde 1</h2>
     <p>Höre genau hin!</p>
 
-    <div class="player-wrapper">
+    <div class="player-shell">
       <iframe
+        id="deezer"
         src="https://widget.deezer.com/widget/dark/track/4538913"
-        allow="encrypted-media"
-        loading="lazy">
-      </iframe>
+        allow="encrypted-media; autoplay"
+      ></iframe>
 
-      <!-- Sichtschutz für Cover / Titel / Interpret -->
-      <div class="mask"></div>
+      <!-- Blockiert ALLES -->
+      <div class="blocker"></div>
+      <!-- Klick-Freigabe für Controls -->
+      <div class="control-hole"></div>
+    </div>
+
+    <div class="nav">
+      <button onclick="prev()">⏮</button>
+      <button onclick="next()">⏭</button>
     </div>
 
     <div class="hint">
-      Titel & Interpret sind verborgen
+      Titel & Interpret sind bewusst verborgen
     </div>
   </div>
+
+  <script>
+    const tracks = [
+      4538913,   // Für Elise
+      1109731,   // Vivaldi – Frühling
+      3135556    // Mozart – Kleine Nachtmusik
+    ];
+
+    let index = 0;
+    const iframe = document.getElementById("deezer");
+
+    function load() {
+      iframe.src =
+        "https://widget.deezer.com/widget/dark/track/" + tracks[index];
+    }
+
+    function next() {
+      index = (index + 1) % tracks.length;
+      load();
+    }
+
+    function prev() {
+      index = (index - 1 + tracks.length) % tracks.length;
+      load();
+    }
+  </script>
 </body>
 </html>
 ``
