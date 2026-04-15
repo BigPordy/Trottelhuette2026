@@ -3,133 +3,208 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hitster – Runde 1</title>
+  <title>Hitster – Autofahrt</title>
 
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: linear-gradient(180deg, #0f172a, #020617);
-      color: white;
-      display: flex;
-      height: 100vh;
-      justify-content: center;
-      align-items: center;
-      margin: 0;
+      background: linear-gradient(180deg,#0f172a,#020617);
+      color:white;
+      margin:0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
     }
 
     .card {
-      width: 360px;
-      padding: 1.5rem;
-      border-radius: 18px;
-      background: #1f2937;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-      text-align: center;
-    }
-
-    .controls {
-      margin-top: 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.5rem;
+      width:360px;
+      background:#1f2937;
+      border-radius:18px;
+      padding:1.5rem;
+      box-shadow:0 20px 60px rgba(0,0,0,.4);
+      text-align:center;
     }
 
     button {
-      background: #0f172a;
-      color: white;
-      border: none;
-      border-radius: 999px;
-      padding: 0.5rem 1rem;
-      font-size: 1.2rem;
-      cursor: pointer;
+      background:#0f172a;
+      color:white;
+      border:none;
+      border-radius:999px;
+      padding:0.5rem 1rem;
+      font-size:1.1rem;
+      cursor:pointer;
+      margin:0 0.25rem;
+    }
+
+    .controls {
+      margin-top:1rem;
+      display:flex;
+      justify-content:center;
+      gap:0.5rem;
     }
 
     input[type="range"] {
-      width: 100%;
-      margin-top: 0.75rem;
+      width:100%;
+      margin-top:0.75rem;
+    }
+
+    .countdown {
+      margin-top:0.5rem;
+      font-size:1.2rem;
+      font-weight:bold;
     }
 
     .hint {
-      margin-top: 0.75rem;
-      font-size: 0.8rem;
-      opacity: 0.6;
+      margin-top:0.75rem;
+      font-size:0.8rem;
+      opacity:0.6;
     }
   </style>
 </head>
 
 <body>
-  <div class="card">
-    <h2>🎵 Hitster – Runde 1</h2>
-    <p>Höre genau hin!</p>
+<div class="card">
 
-    <audio id="player"></audio>
+  <h2 id="roundTitle">🎵 Runde 1 – Hitster</h2>
+  <p id="questionText">Titel & Interpret erraten</p>
 
-    <div class="controls">
-      <button onclick="prev()">⏮</button>
-      <button onclick="toggle()">▶ / ⏸</button>
-      <button onclick="next()">⏭</button>
-    </div>
+  <audio id="player"></audio>
 
-    <input
-      type="range"
-      id="progress"
-      min="0"
-      max="100"
-      value="0"
-    />
-
-    <div class="hint">
-      Titel &amp; Interpret sind verborgen
-    </div>
+  <div class="controls">
+    <button onclick="prev()">⏮</button>
+    <button onclick="toggle()">▶ / ⏸</button>
+    <button onclick="next()">⏭</button>
   </div>
 
-  <script>
-    const tracks = [
-      "audio/01_fuer_elise.mp3",
-      "audio/02_vivaldi_fruehling.mp3",
-      "audio/03_mozart_nachtmusik.mp3"
-      // später bis 15 erweitern
-    ];
+  <input type="range" id="progress" min="0" max="100" value="0">
 
-    let index = 0;
-    const audio = document.getElementById("player");
-    const progress = document.getElementById("progress");
+  <div class="countdown">
+    ⏳ <span id="timeLeft">30</span>s
+  </div>
 
-    function load() {
-      audio.src = tracks[index];
-      audio.load();
+  <div class="hint" id="roundHint">
+    Runde 1 läuft
+  </div>
+
+</div>
+
+<script>
+/* ========= KONFIGURATION ========= */
+
+const ROUND_TIME = 30; // Sekunden pro Song
+
+const rounds = [
+  {
+    title: "🎵 Runde 1 – Hitster",
+    question: "Titel & Interpret erraten",
+    hint: "Runde 1 läuft",
+    tracks: [
+      "audio/r1_01.mp3",
+      "audio/r1_02.mp3",
+      "audio/r1_03.mp3"
+      // bis r1_15.mp3
+    ]
+  },
+  {
+    title: "🎬 Runde 2 – Filmmusik",
+    question: "Aus welchem Film?",
+    hint: "Runde 2 läuft",
+    tracks: [
+      "audio/r2_01.mp3",
+      "audio/r2_02.mp3",
+      "audio/r2_03.mp3"
+      // bis r2_xx.mp3
+    ]
+  }
+];
+
+/* ========= PLAYER LOGIK ========= */
+
+const audio = document.getElementById("player");
+const progress = document.getElementById("progress");
+const timeLeftEl = document.getElementById("timeLeft");
+
+let roundIndex = 0;
+let trackIndex = 0;
+let countdown;
+let timeLeft = ROUND_TIME;
+
+function loadTrack() {
+  clearInterval(countdown);
+  timeLeft = ROUND_TIME;
+  timeLeftEl.textContent = timeLeft;
+
+  const round = rounds[roundIndex];
+  audio.src = round.tracks[trackIndex];
+  audio.load();
+  updateTexts();
+}
+
+function updateTexts() {
+  const round = rounds[roundIndex];
+  document.getElementById("roundTitle").textContent = round.title;
+  document.getElementById("questionText").textContent = round.question;
+  document.getElementById("roundHint").textContent = round.hint;
+}
+
+function startCountdown() {
+  countdown = setInterval(() => {
+    timeLeft--;
+    timeLeftEl.textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(countdown);
+      audio.pause(); // bewusst stoppen
     }
+  }, 1000);
+}
 
-    function toggle() {
-      audio.paused ? audio.play() : audio.pause();
-    }
+function toggle() {
+  if (audio.paused) {
+    audio.play();
+    startCountdown();
+  } else {
+    audio.pause();
+  }
+}
 
-    function next() {
-      index = (index + 1) % tracks.length;
-      load();
-      audio.play();
-    }
+function next() {
+  trackIndex++;
+  const round = rounds[roundIndex];
+  if (trackIndex >= round.tracks.length) {
+    trackIndex = 0;
+    roundIndex = (roundIndex + 1) % rounds.length; // Wechsel zu Runde 2
+  }
+  loadTrack();
+  audio.play();
+  startCountdown();
+}
 
-    function prev() {
-      index = (index - 1 + tracks.length) % tracks.length;
-      load();
-      audio.play();
-    }
+function prev() {
+  trackIndex--;
+  if (trackIndex < 0) trackIndex = 0;
+  loadTrack();
+  audio.play();
+  startCountdown();
+}
 
-    audio.ontimeupdate = () => {
-      if (!isNaN(audio.duration)) {
-        progress.value = (audio.currentTime / audio.duration) * 100;
-      }
-    };
+/* Progress */
+audio.ontimeupdate = () => {
+  if (!isNaN(audio.duration)) {
+    progress.value = (audio.currentTime / audio.duration) * 100;
+  }
+};
 
-    progress.oninput = () => {
-      if (!isNaN(audio.duration)) {
-        audio.currentTime = audio.duration * (progress.value / 100);
-      }
-    };
+progress.oninput = () => {
+  if (!isNaN(audio.duration)) {
+    audio.currentTime = audio.duration * (progress.value / 100);
+  }
+};
 
-    load();
-  </script>
+/* INIT */
+loadTrack();
+</script>
+
 </body>
 </html>
 ``
