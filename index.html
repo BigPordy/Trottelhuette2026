@@ -36,6 +36,14 @@
       cursor:pointer;
     }
 
+    input {
+      width:100%;
+      padding:0.4rem;
+      margin-top:0.3rem;
+      border-radius:6px;
+      border:none;
+    }
+
     .roundswitch {
       display:flex;
       justify-content:center;
@@ -84,8 +92,8 @@
     <button id="btnRound2" onclick="switchRound(1)">🎬 Runde 2</button>
   </div>
 
-  <h2 id="roundTitle">🎵 Runde 1 – Hitster</h2>
-  <p id="questionText">Titel &amp; Interpret erraten</p>
+  <h2 id="roundTitle"></h2>
+  <p id="questionText"></p>
 
   <audio id="player"></audio>
 
@@ -103,16 +111,36 @@
   </div>
 
   <div class="songindex">
-    Song <span id="songNr">1</span> / <span id="songTotal">15</span>
+    Song <span id="songNr">1</span> / <span id="songTotal">1</span>
   </div>
 
-  <div class="hint">Autofahrt – frei zwischen Runden wechseln</div>
+  <!-- TEAM -->
+  <div id="teamSetup" style="margin-top:1rem;">
+    <input id="teamNameInput" placeholder="Teamname eingeben" />
+    <button onclick="saveTeamName()">Start</button>
+  </div>
+
+  <!-- ANTWORTEN -->
+  <div id="answerSection" style="display:none;margin-top:1rem;">
+    <div id="round1Inputs">
+      <input id="artistInput" placeholder="Interpret" />
+      <input id="titleInput" placeholder="Songtitel" />
+    </div>
+
+    <div id="round2Inputs" style="display:none;">
+      <input id="movieInput" placeholder="Filmtitel" />
+    </div>
+
+    <button onclick="saveAnswer()">Antwort speichern</button>
+    <div id="saveFeedback" style="font-size:0.75rem;opacity:0.7;"></div>
+  </div>
+
 </div>
 
 <script>
 /* ===== TRACKLISTEN ===== */
 
-// ✅ Runde 1 – Musik
+// Runde 1
 const round1Tracks = [
   "audio/01_fuer_elise.mp3",
   "audio/02_vivaldi_fruehling.mp3",
@@ -131,7 +159,7 @@ const round1Tracks = [
   "audio/15_strauss_donauwalser.mp3"
 ];
 
-// ✅ Runde 2 – Filmmusik
+// Runde 2
 const round2Tracks = [
   "audio-round2/01_forrest_gump.mp3",
   "audio-round2/02_8mile.mp3",
@@ -152,8 +180,8 @@ const round2Tracks = [
 ];
 
 const rounds = [
-  { name:"🎵 Runde 1 – Hitster", question:"Titel & Interpret erraten", tracks: round1Tracks },
-  { name:"🎬 Runde 2 – Filmmusik", question:"Aus welchem Film?", tracks: round2Tracks }
+  { name:"🎵 Runde 1 – Hitster", question:"Titel & Interpret erraten", tracks:round1Tracks },
+  { name:"🎬 Runde 2 – Filmmusik", question:"Aus welchem Film?", tracks:round2Tracks }
 ];
 
 let roundIndex = 0;
@@ -169,9 +197,18 @@ const songTotalEl = document.getElementById("songTotal");
 const titleEl = document.getElementById("roundTitle");
 const questionEl = document.getElementById("questionText");
 
+/* ===== TEAM ===== */
+let teamName = localStorage.getItem("teamName");
+let answers = JSON.parse(localStorage.getItem("answers") || "{}");
+
+if (teamName) {
+  document.getElementById("teamSetup").style.display = "none";
+  document.getElementById("answerSection").style.display = "block";
+}
+
 /* ===== HILFE ===== */
 function formatTime(s){
-  s = Math.max(0, Math.floor(s));
+  s = Math.floor(Math.max(0,s));
   return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 }
 
@@ -189,54 +226,77 @@ function loadTrack(){
   progress.value = 0;
   currentEl.textContent = "00:00";
   remainingEl.textContent = "00:00";
-  highlightRoundButtons();
+
+  updateAnswerInputs();
+  highlightButtons();
 }
 
-function toggle(){
-  audio.paused ? audio.play() : audio.pause();
-}
+function toggle(){ audio.paused ? audio.play() : audio.pause(); }
 
 function next(){
   const round = rounds[roundIndex];
   trackIndex = (trackIndex + 1) % round.tracks.length;
-  loadTrack();
-  audio.play();
+  loadTrack(); audio.play();
 }
 
 function prev(){
-  if(trackIndex > 0) trackIndex--;
-  loadTrack();
-  audio.play();
+  if(trackIndex>0) trackIndex--;
+  loadTrack(); audio.play();
 }
 
-/* ===== RUNDE SWITCH ===== */
-function switchRound(idx){
-  if(roundIndex === idx) return;
+function switchRound(i){
+  if(roundIndex===i) return;
   audio.pause();
-  roundIndex = idx;
-  trackIndex = 0;
+  roundIndex=i; trackIndex=0;
   loadTrack();
 }
 
-function highlightRoundButtons(){
-  document.getElementById("btnRound1").style.opacity = roundIndex === 0 ? "1" : "0.5";
-  document.getElementById("btnRound2").style.opacity = roundIndex === 1 ? "1" : "0.5";
+function highlightButtons(){
+  btnRound1.style.opacity = roundIndex===0?"1":"0.5";
+  btnRound2.style.opacity = roundIndex===1?"1":"0.5";
 }
 
 /* ===== ZEIT ===== */
-audio.ontimeupdate = ()=>{
+audio.ontimeupdate=()=>{
   if(!isNaN(audio.duration)){
-    progress.value = (audio.currentTime / audio.duration) * 100;
+    progress.value = audio.currentTime/audio.duration*100;
     currentEl.textContent = formatTime(audio.currentTime);
-    remainingEl.textContent = formatTime(audio.duration - audio.currentTime);
+    remainingEl.textContent = formatTime(audio.duration-audio.currentTime);
+  }
+};
+progress.oninput=()=>{
+  if(!isNaN(audio.duration)){
+    audio.currentTime = audio.duration*(progress.value/100);
   }
 };
 
-progress.oninput = ()=>{
-  if(!isNaN(audio.duration)){
-    audio.currentTime = audio.duration * (progress.value / 100);
-  }
-};
+/* ===== ANTWORTEN ===== */
+function saveTeamName(){
+  const v=teamNameInput.value.trim();
+  if(!v) return;
+  teamName=v;
+  localStorage.setItem("teamName",v);
+  teamSetup.style.display="none";
+  answerSection.style.display="block";
+}
+
+function saveAnswer(){
+  const rk = roundIndex===0?"round1":"round2";
+  const sk = String(trackIndex+1);
+  if(!answers[rk]) answers[rk]={};
+
+  answers[rk][sk] = rk==="round1"
+    ? {artist:artistInput.value,title:titleInput.value}
+    : {movie:movieInput.value};
+
+  localStorage.setItem("answers",JSON.stringify(answers));
+  saveFeedback.textContent="✅ Gespeichert";
+}
+
+function updateAnswerInputs(){
+  round1Inputs.style.display = roundIndex===0?"block":"none";
+  round2Inputs.style.display = roundIndex===1?"block":"none";
+}
 
 /* ===== INIT ===== */
 loadTrack();
