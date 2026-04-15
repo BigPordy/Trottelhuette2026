@@ -84,8 +84,7 @@
   <input id="progress" type="range" min="0" max="100" value="0">
 
   <div class="time">
-    <span id="current">00:00</span>
-    /
+    <span id="current">00:00</span> /
     <span id="remaining">00:00</span>
   </div>
 
@@ -93,32 +92,29 @@
     Song <span id="songNr">1</span> / <span id="songTotal">15</span>
   </div>
 
-  <div class="hint">
-    Runde 1 – Autofahrt
-  </div>
+  <div class="hint">Runde 1 – Autofahrt</div>
 </div>
 
 <script>
-/* ===== TRACKLISTE (Runde 1 – 15 Songs) ===== */
+/* ===== EXAKTE TRACKLISTE (DEINE DATEINAMEN) ===== */
 const tracks = [
   "audio/01_fuer_elise.mp3",
   "audio/02_vivaldi_fruehling.mp3",
   "audio/03_mozart_nachtmusik.mp3",
-  "audio/04_verdi_la_donna.mp3",
+  "audio/04_verdi_ladonna.mp3",
   "audio/05_tschaikowski_schwanensee.mp3",
-  "audio/06_wagner_walkuerenritt.mp3",
-  "audio/07_beethoven_5.mp3",
+  "audio/06_wagner_walkueren.mp3",
+  "audio/07_beethoven_symphonie5.mp3",
   "audio/08_bach_air.mp3",
   "audio/09_mozart_nachtmusik.mp3",
   "audio/10_pachelbel_kanon.mp3",
-  "audio/11_mozart_tuerkischer_marsch.mp3",
-  "audio/12_orff_o_fortuna.mp3",
+  "audio/11_mozart_turca.mp3",
+  "audio/12_orff_fortuna.mp3",
   "audio/13_bizet_carmen.mp3",
   "audio/14_grieg_morgenstimmung.mp3",
-  "audio/15_strauss_blaue_donau.mp3"
+  "audio/15_strauss_donauwalser.mp3"
 ];
 
-/* ===== STATE ===== */
 let index = 0;
 
 const audio = document.getElementById("player");
@@ -130,15 +126,11 @@ const songTotalEl = document.getElementById("songTotal");
 
 songTotalEl.textContent = tracks.length;
 
-/* ===== HELFER ===== */
-function formatTime(seconds) {
-  seconds = Math.max(0, Math.floor(seconds));
-  const m = String(Math.floor(seconds / 60)).padStart(2,"0");
-  const s = String(seconds % 60).padStart(2,"0");
-  return `${m}:${s}`;
+function formatTime(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  return `${String(Math.floor(sec/60)).padStart(2,"0")}:${String(sec%60).padStart(2,"0")}`;
 }
 
-/* ===== PLAYER ===== */
 function loadTrack() {
   audio.src = tracks[index];
   audio.load();
@@ -153,27 +145,20 @@ function toggle() {
 }
 
 function next() {
-  if (index < tracks.length - 1) {
-    index++;
-  } else {
-    index = 0; // bewusst wieder von vorne (Autofahrt)
-  }
+  index = (index + 1) % tracks.length;
   loadTrack();
   audio.play();
 }
 
 function prev() {
-  if (index > 0) {
-    index--;
-  }
+  if (index > 0) index--;
   loadTrack();
   audio.play();
 }
 
-/* ===== ZEIT & PROGRESS ===== */
 audio.ontimeupdate = () => {
   if (!isNaN(audio.duration)) {
-    progress.value = (audio.currentTime / audio.duration) * 100;
+    progress.value = audio.currentTime / audio.duration * 100;
     currentEl.textContent = formatTime(audio.currentTime);
     remainingEl.textContent = formatTime(audio.duration - audio.currentTime);
   }
@@ -185,7 +170,6 @@ progress.oninput = () => {
   }
 };
 
-/* ===== INIT ===== */
 loadTrack();
 </script>
 </body>
