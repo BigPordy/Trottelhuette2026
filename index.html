@@ -20,40 +20,39 @@
     .card {
       width: 360px;
       padding: 1.5rem;
-      border-radius: 16px;
+      border-radius: 18px;
       background: #1f2937;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
       text-align: center;
     }
 
-    .player-wrapper {
-      position: relative;
+    .controls {
       margin-top: 1rem;
-      border-radius: 12px;
-      overflow: hidden;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    iframe {
-      width: 100%;
-      height: 90px;
+    button {
+      background: #0f172a;
+      color: white;
       border: none;
+      border-radius: 999px;
+      padding: 0.5rem 1rem;
+      font-size: 1.2rem;
+      cursor: pointer;
     }
 
-    /* 🔒 Maske: verdeckt alles OBEN (Cover, Titel, Interpret) */
-    .mask {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 58px; /* so bleibt die Control-Leiste sichtbar */
-      background: #1f2937;
-      pointer-events: none;
+    input[type="range"] {
+      width: 100%;
+      margin-top: 0.75rem;
     }
 
     .hint {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      opacity: 0.7;
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      opacity: 0.6;
     }
   </style>
 </head>
@@ -63,20 +62,74 @@
     <h2>🎵 Hitster – Runde 1</h2>
     <p>Höre genau hin!</p>
 
-    <div class="player-wrapper">
-      <iframe
-        id="deezer"
-        src="https://widget.deezer.com/widget/dark/track/4538913"
-        allow="autoplay; encrypted-media">
-      </iframe>
+    <audio id="player"></audio>
 
-      <!-- Sichtschutz -->
-      <div class="mask"></div>
+    <div class="controls">
+      <button onclick="prev()">⏮</button>
+      <button onclick="toggle()">▶ / ⏸</button>
+      <button onclick="next()">⏭</button>
     </div>
+
+    <input
+      type="range"
+      id="progress"
+      min="0"
+      max="100"
+      value="0"
+    />
 
     <div class="hint">
       Titel &amp; Interpret sind verborgen
     </div>
   </div>
+
+  <script>
+    const tracks = [
+      "audio/01_fuer_elise.mp3",
+      "audio/02_vivaldi_fruehling.mp3",
+      "audio/03_mozart_nachtmusik.mp3"
+      // später bis 15 erweitern
+    ];
+
+    let index = 0;
+    const audio = document.getElementById("player");
+    const progress = document.getElementById("progress");
+
+    function load() {
+      audio.src = tracks[index];
+      audio.load();
+    }
+
+    function toggle() {
+      audio.paused ? audio.play() : audio.pause();
+    }
+
+    function next() {
+      index = (index + 1) % tracks.length;
+      load();
+      audio.play();
+    }
+
+    function prev() {
+      index = (index - 1 + tracks.length) % tracks.length;
+      load();
+      audio.play();
+    }
+
+    audio.ontimeupdate = () => {
+      if (!isNaN(audio.duration)) {
+        progress.value = (audio.currentTime / audio.duration) * 100;
+      }
+    };
+
+    progress.oninput = () => {
+      if (!isNaN(audio.duration)) {
+        audio.currentTime = audio.duration * (progress.value / 100);
+      }
+    };
+
+    load();
+  </script>
 </body>
 </html>
+``
