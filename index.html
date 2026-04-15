@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hitster – Test</title>
+  <title>Hitster – Runde 1 Test</title>
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -30,17 +30,31 @@
       border: none;
       background: #10b981;
       color: #111827;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="box">
-    <h1>🎶 Hitster – Testseite</h1>
-    <p>Diese Seite ist der Einstieg für Runde 1.</p>
-    <p>QR‑Code & externer Browser ✅</p>
-    <button onclick="alert('Audio kommt im nächsten Schritt (Deezer)')">
-      Test‑Button
-    </button>
+    <h1>🎶 Hitster – Runde 1</h1>
+    <p>Deezer‑Audio‑Test</p>
+
+    <button onclick="play()">▶ Musik abspielen</button>
+
+    <p style="margin-top:1rem;font-size:0.9rem;opacity:0.7">
+      Titel & Interpret sind bewusst verborgen
+    </p>
   </div>
+
+  <script>
+    function play() {
+      const audio = new Audio(
+        "https://cdns-preview-7.dzcdn.net/stream/c-9fdbd3aebd4a4a9f1a2c2c77d7a0e9b6-3.mp3"
+      );
+      audio.volume = 1.0;
+      audio.play();
+    }
+  </script>
 </body>
 </html>
+``
