@@ -1,13 +1,17 @@
-<script>
-  function play() {
-    const audio = new Audio(
-      "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-    );
-    audio.volume = 1.0;
-    audio.play().then(() => {
-      console.log("Audio läuft");
-    }).catch(err => {
-      alert("Audio-Fehler: " + err);
-    });
-  }
-</script>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Audio-Hardtest</title>
+</head>
+<body>
+  <h2>Audio-Hardtest</h2>
+
+  <audio controls>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+    Dein Browser unterstützt kein Audio.
+  </audio>
+
+</body>
+</html>
+``
