@@ -14,7 +14,7 @@ body {
   height: 100vh;
 }
 
-/* ZENTRIERTE SCREENS */
+/* ===== GENERISCHE SCREENS ===== */
 .screen {
   position: fixed;
   inset: 0;
@@ -34,42 +34,79 @@ body {
   text-align: center;
 }
 
+/* ===== BUTTONS & INPUTS ===== */
 button {
   background: #0f172a;
   color: white;
   border: none;
   border-radius: 999px;
-  padding: 0.5rem 1rem;
-  font-size: 1.1rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 1.05rem;
   cursor: pointer;
 }
 
 input {
   width: 100%;
-  padding: 0.4rem;
-  margin-top: 0.5rem;
+  padding: 0.45rem;
+  margin-top: 0.6rem;
   border-radius: 6px;
   border: none;
 }
 
-/* PLAYER */
-.controls { display:flex; gap:0.75rem; justify-content:center; margin-top:1rem; }
-input[type=range]{ width:100%; margin-top:0.75rem; }
+/* ===== PLAYER ===== */
+#playerScreen {
+  display: none;
+  padding-top: 1rem;
+}
 
-.time { margin-top:0.5rem; font-size:1.1rem; }
-.songindex { font-size:0.9rem; opacity:0.7; margin-top:0.25rem; }
-.hint { font-size:0.75rem; opacity:0.6; margin-top:0.75rem; }
+.banner {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+input[type=range] {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.time {
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.songindex {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin-top: 0.25rem;
+}
+
+.hint {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 0.75rem;
+}
 </style>
 </head>
 
 <body>
 
-<!-- STARTSCREEN: TEAMNAME -->
+<!-- STARTSCREEN -->
 <div id="startScreen" class="screen">
   <div class="card">
     <h2>👥 Team anmelden</h2>
     <input id="teamInput" placeholder="Teamname eingeben">
-    <button onclick="startGame()">Spiel starten</button>
+    <div style="margin-top:1.2rem;">
+      <button onclick="startGame()">Spiel starten</button>
+    </div>
   </div>
 </div>
 
@@ -78,12 +115,14 @@ input[type=range]{ width:100%; margin-top:0.75rem; }
   <div class="card">
     <h2>🎵 Runde 1 – Hitster</h2>
     <p>
-      Erratet <b>Interpret</b> und <b>Songtitel</b><br><br>
-      ✅ Interpret richtig = 1 Punkt<br>
-      ✅ Titel richtig = 1 Punkt<br>
-      ⭐ Beide richtig = Bonuspunkt
+      Interpret & Songtitel erraten<br><br>
+      ✅ Interpret = 1 Punkt<br>
+      ✅ Titel = 1 Punkt<br>
+      ⭐ Beide = Bonuspunkt
     </p>
-    <button onclick="beginRound(0)">Runde starten</button>
+    <div style="margin-top:1.2rem;">
+      <button onclick="beginRound(0)">Runde starten</button>
+    </div>
   </div>
 </div>
 
@@ -92,16 +131,25 @@ input[type=range]{ width:100%; margin-top:0.75rem; }
   <div class="card">
     <h2>🎬 Runde 2 – Filmmusik</h2>
     <p>
-      Aus welchem Film stammt die Musik?<br><br>
+      Aus welchem Film?<br><br>
       ✅ Richtiger Film = <b>2 Punkte</b>
     </p>
-    <button onclick="beginRound(1)">Runde starten</button>
+    <div style="margin-top:1.2rem;">
+      <button onclick="beginRound(1)">Runde starten</button>
+    </div>
   </div>
 </div>
 
 <!-- PLAYER -->
-<div id="playerScreen" class="screen" style="display:none;">
+<div id="playerScreen" class="screen">
   <div class="card">
+
+    <!-- PERMANENTER BANNER -->
+    <div class="banner">
+      <button onclick="switchRound(0)">🎵 Runde 1</button>
+      <button onclick="switchRound(1)">🎬 Runde 2</button>
+    </div>
+
     <h2 id="roundTitle"></h2>
     <p id="questionText"></p>
 
@@ -116,7 +164,8 @@ input[type=range]{ width:100%; margin-top:0.75rem; }
     <input id="progress" type="range" min="0" max="100" value="0">
 
     <div class="time">
-      <span id="current">00:00</span> / <span id="remaining">00:00</span>
+      <span id="current">00:00</span> /
+      <span id="remaining">00:00</span>
     </div>
 
     <div class="songindex">
@@ -133,7 +182,10 @@ input[type=range]{ width:100%; margin-top:0.75rem; }
       <input id="movieInput" placeholder="Filmtitel">
     </div>
 
-    <button onclick="saveAnswer()">Antwort speichern</button>
+    <div style="margin-top:1.1rem;">
+      <button onclick="saveAnswer()">Antwort speichern</button>
+    </div>
+
     <div class="hint" id="saveHint"></div>
   </div>
 </div>
@@ -153,8 +205,8 @@ const round2Tracks = [
   "audio-round2/04_harry_potter.mp3","audio-round2/05_godfather.mp3","audio-round2/06_fight_club.mp3",
   "audio-round2/07_intouchables.mp3","audio-round2/08_interstellar.mp3","audio-round2/09_schindlers_list.mp3",
   "audio-round2/10_inception.mp3","audio-round2/11_theoffice.mp3","audio-round2/12_requiem_for_a_dream.mp3",
-  "audio-round2/13_stunde_des_siegers.mp3","audio-round2/14_batman_begins.mp3","audio-round2/15_barbie.mp3",
-  "audio-round2/16_sherlock_holmes.mp3"
+  "audio-round2/13_stunde_des_siegers.mp3","audio-round2/14_batman_begins.mp3",
+  "audio-round2/15_barbie.mp3","audio-round2/16_sherlock_holmes.mp3"
 ];
 
 const rounds = [
@@ -168,7 +220,7 @@ let teamName = "";
 
 const audio = document.getElementById("player");
 
-/* ===== FLOW ===== */
+/* ===== START FLOW ===== */
 function startGame(){
   teamName = teamInput.value.trim();
   if(!teamName) return;
@@ -187,12 +239,13 @@ function beginRound(idx){
 
 /* ===== PLAYER ===== */
 function loadTrack(){
-  audio.src = rounds[roundIndex].tracks[trackIndex];
+  const r = rounds[roundIndex];
+  audio.src = r.tracks[trackIndex];
   audio.load();
-  roundTitle.textContent = rounds[roundIndex].name;
-  questionText.textContent = rounds[roundIndex].question;
+  roundTitle.textContent = r.name;
+  questionText.textContent = r.question;
   songNr.textContent = trackIndex+1;
-  songTotal.textContent = rounds[roundIndex].tracks.length;
+  songTotal.textContent = r.tracks.length;
   round1Inputs.style.display = roundIndex===0?"block":"none";
   round2Inputs.style.display = roundIndex===1?"block":"none";
 }
@@ -200,6 +253,14 @@ function loadTrack(){
 function toggle(){ audio.paused?audio.play():audio.pause(); }
 function next(){ trackIndex=(trackIndex+1)%rounds[roundIndex].tracks.length; loadTrack(); audio.play(); }
 function prev(){ if(trackIndex>0) trackIndex--; loadTrack(); audio.play(); }
+
+/* ===== RUNDEN-WECHSEL (PER BANNER) ===== */
+function switchRound(i){
+  if(roundIndex===i) return;
+  audio.pause();
+  roundIndex=i; trackIndex=0;
+  loadTrack();
+}
 
 /* ===== ZEIT ===== */
 audio.ontimeupdate=()=>{
@@ -219,10 +280,14 @@ function saveAnswer(){
     : {movie:movieInput.value};
 
   localStorage.setItem("answers",JSON.stringify(answers));
+
+  // ✅ Eingaben leeren
+  artistInput.value = "";
+  titleInput.value = "";
+  movieInput.value = "";
+
   saveHint.textContent="✅ Gespeichert (überschreibbar)";
 }
 </script>
-
 </body>
 </html>
-``
