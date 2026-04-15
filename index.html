@@ -35,7 +35,7 @@ body {
   text-align:center;
 }
 
-/* Form */
+/* Controls */
 input {
   width:100%;
   padding:0.5rem;
@@ -46,27 +46,26 @@ input {
 }
 
 button {
-  margin-top:1.2rem;
+  margin-top:1rem;
   padding:0.6rem 1.4rem;
   border-radius:999px;
   border:none;
   background:#2563eb;
   color:white;
-  font-size:1.05rem;
+  font-size:1rem;
   cursor:pointer;
 }
 
-button:active { transform:scale(0.98); }
-
-.error {
-  margin-top:0.6rem;
-  color:#fca5a5;
-  font-size:0.9rem;
+.nav {
+  display:flex;
+  justify-content:space-between;
+  gap:0.5rem;
+  margin-top:0.75rem;
 }
 
 .hint {
   margin-top:0.6rem;
-  font-size:0.85rem;
+  font-size:0.8rem;
   opacity:0.8;
 }
 </style>
@@ -78,26 +77,42 @@ button:active { transform:scale(0.98); }
 <div id="startScreen" class="screen">
   <div class="card">
     <h2>👥 Team anmelden</h2>
-
     <input id="teamNameInput" placeholder="Teamname eingeben">
-
     <button id="startBtn" type="button">Spiel starten</button>
-
-    <div id="startError" class="error"></div>
+    <div id="startError" class="hint"></div>
   </div>
 </div>
 
 <!-- SPIELSCREEN -->
 <div id="gameScreen" class="screen" style="display:none;">
   <div class="card">
-    <h2>🎵 Runde 1 – Hitster</h2>
-    <p>Interpret &amp; Songtitel eingeben</p>
 
-    <!-- Antwortfelder -->
-    <input id="artistInput" placeholder="Interpret">
-    <input id="titleInput" placeholder="Songtitel">
+    <!-- RUNDEN-BANNER -->
+    <div class="nav">
+      <button onclick="switchRound(0)">🎵 Runde 1</button>
+      <button onclick="switchRound(1)">🎬 Runde 2</button>
+    </div>
+
+    <h2 id="roundTitle"></h2>
+    <p id="songInfo"></p>
+
+    <!-- ANTWORTEN -->
+    <div id="round1Inputs">
+      <input id="artistInput" placeholder="Interpret">
+      <input id="titleInput" placeholder="Songtitel">
+    </div>
+
+    <div id="round2Inputs" style="display:none;">
+      <input id="movieInput" placeholder="Filmtitel">
+    </div>
 
     <button id="saveBtn" type="button">Antwort speichern</button>
+
+    <!-- SONG NAVIGATION -->
+    <div class="nav">
+      <button onclick="prevSong()">⏮ Vorher</button>
+      <button onclick="nextSong()">⏭ Nächster</button>
+    </div>
 
     <div id="saveStatus" class="hint"></div>
   </div>
@@ -106,32 +121,41 @@ button:active { transform:scale(0.98); }
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ✅ Supabase Client */
+  /* ✅ Supabase */
   const supabase = window.supabase.createClient(
     "https://havaoqxnxnlmyfbldyic.supabase.co",
     "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
   );
 
-  // DOM
+  /* UI */
   const startScreen = document.getElementById("startScreen");
-  const gameScreen  = document.getElementById("gameScreen");
-  const teamInput   = document.getElementById("teamNameInput");
-  const startBtn    = document.getElementById("startBtn");
-  const startError  = document.getElementById("startError");
+  const gameScreen = document.getElementById("gameScreen");
+  const startBtn = document.getElementById("startBtn");
+  const teamNameInput = document.getElementById("teamNameInput");
+  const startError = document.getElementById("startError");
+
+  const roundTitle = document.getElementById("roundTitle");
+  const songInfo = document.getElementById("songInfo");
+
+  const round1Inputs = document.getElementById("round1Inputs");
+  const round2Inputs = document.getElementById("round2Inputs");
 
   const artistInput = document.getElementById("artistInput");
-  const titleInput  = document.getElementById("titleInput");
-  const saveBtn     = document.getElementById("saveBtn");
-  const saveStatus  = document.getElementById("saveStatus");
+  const titleInput = document.getElementById("titleInput");
+  const movieInput = document.getElementById("movieInput");
+  const saveStatus = document.getElementById("saveStatus");
 
-  // State
+  /* State */
   let teamId = null;
+  let roundIndex = 0; // 0 = Runde 1, 1 = Runde 2
+  let songIndex = 0;
 
-  /* ✅ Team anlegen */
+  const songCounts = [15, 16]; // Runde 1 / Runde 2
+
+  /* START GAME */
   startBtn.addEventListener("click", async () => {
     startError.textContent = "";
-    const name = teamInput.value.trim();
-
+    const name = teamNameInput.value.trim();
     if (!name) {
       startError.textContent = "Bitte Teamnamen eingeben";
       return;
@@ -150,22 +174,57 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     teamId = data.id;
-
     startScreen.style.display = "none";
-    gameScreen.style.display  = "flex";
+    gameScreen.style.display = "flex";
+    updateUI();
   });
 
-  /* ✅ Antwort speichern (LIVE UPSERT) */
-  saveBtn.addEventListener("click", async () => {
+  /* UI UPDATE */
+  function updateUI() {
+    roundTitle.textContent = roundIndex === 0
+      ? "🎵 Runde 1 – Hitster"
+      : "🎬 Runde 2 – Filmmusik";
+
+    songInfo.textContent = `Song ${songIndex + 1} von ${songCounts[roundIndex]}`;
+
+    round1Inputs.style.display = roundIndex === 0 ? "block" : "none";
+    round2Inputs.style.display = roundIndex === 1 ? "block" : "none";
+
+    artistInput.value = "";
+    titleInput.value = "";
+    movieInput.value = "";
+    saveStatus.textContent = "";
+  }
+
+  /* SONG NAVIGATION */
+  window.nextSong = () => {
+    songIndex = (songIndex + 1) % songCounts[roundIndex];
+    updateUI();
+  };
+
+  window.prevSong = () => {
+    if (songIndex > 0) songIndex--;
+    updateUI();
+  };
+
+  /* ROUND SWITCH */
+  window.switchRound = (idx) => {
+    roundIndex = idx;
+    songIndex = 0;
+    updateUI();
+  };
+
+  /* SAVE ANSWER */
+  document.getElementById("saveBtn").addEventListener("click", async () => {
     if (!teamId) return;
 
     const payload = {
       team_id: teamId,
-      round: 1,
-      song: 1, // ✅ vorerst immer Song 1 (Navigation kommt danach)
-      artist: artistInput.value.trim() || null,
-      title:  titleInput.value.trim()  || null,
-      movie:  null
+      round: roundIndex + 1,
+      song: songIndex + 1,
+      artist: artistInput.value || null,
+      title: titleInput.value || null,
+      movie: movieInput.value || null
     };
 
     const { error } = await supabase
@@ -178,11 +237,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Felder leeren
     artistInput.value = "";
-    titleInput.value  = "";
-
-    saveStatus.textContent = "✅ Antwort live gespeichert (überschreibbar)";
+    titleInput.value = "";
+    movieInput.value = "";
+    saveStatus.textContent = "✅ Antwort live gespeichert";
   });
 
 });
