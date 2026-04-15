@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hitster – Live (Phase B)</title>
+<title>Hitster – Live Spiel</title>
 
-<!-- ✅ Supabase korrekt einbinden -->
+<!-- ✅ Supabase Client -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 body {
   margin: 0;
   height: 100vh;
-  background: #020617;
+  background: linear-gradient(180deg,#0f172a,#020617);
   color: white;
   font-family: system-ui, sans-serif;
 }
@@ -27,42 +27,47 @@ body {
 }
 
 .card {
+  width: 360px;
   background:#1f2937;
-  padding:2rem;
-  border-radius:16px;
-  width:360px;
+  border-radius:18px;
+  padding:1.8rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
   text-align:center;
-  box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 
+/* Form */
 input {
   width:100%;
-  padding:0.6rem;
-  margin-top:1rem;
+  padding:0.5rem;
+  margin-top:0.75rem;
   border-radius:6px;
   border:none;
   font-size:1rem;
 }
 
 button {
-  margin-top:1.6rem;
-  padding:0.7rem 1.5rem;
+  margin-top:1.2rem;
+  padding:0.6rem 1.4rem;
   border-radius:999px;
   border:none;
   background:#2563eb;
   color:white;
-  font-size:1rem;
+  font-size:1.05rem;
   cursor:pointer;
 }
 
-button:active {
-  transform: scale(0.98);
-}
+button:active { transform:scale(0.98); }
 
 .error {
-  margin-top:0.75rem;
+  margin-top:0.6rem;
   color:#fca5a5;
   font-size:0.9rem;
+}
+
+.hint {
+  margin-top:0.6rem;
+  font-size:0.85rem;
+  opacity:0.8;
 }
 </style>
 </head>
@@ -76,20 +81,25 @@ button:active {
 
     <input id="teamNameInput" placeholder="Teamname eingeben">
 
-    <button id="startBtn" type="button">
-      Spiel starten
-    </button>
+    <button id="startBtn" type="button">Spiel starten</button>
 
     <div id="startError" class="error"></div>
   </div>
 </div>
 
-<!-- PLAYER (Bestätigung) -->
-<div id="playerScreen" class="screen" style="display:none;">
+<!-- SPIELSCREEN -->
+<div id="gameScreen" class="screen" style="display:none;">
   <div class="card">
-    <h2>✅ Team ist live</h2>
-    <p>Team wurde erfolgreich angelegt.</p>
-    <p id="teamInfo"></p>
+    <h2>🎵 Runde 1 – Hitster</h2>
+    <p>Interpret &amp; Songtitel eingeben</p>
+
+    <!-- Antwortfelder -->
+    <input id="artistInput" placeholder="Interpret">
+    <input id="titleInput" placeholder="Songtitel">
+
+    <button id="saveBtn" type="button">Antwort speichern</button>
+
+    <div id="saveStatus" class="hint"></div>
   </div>
 </div>
 
@@ -102,20 +112,26 @@ document.addEventListener("DOMContentLoaded", () => {
     "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
   );
 
-  const startBtn = document.getElementById("startBtn");
-  const teamInput = document.getElementById("teamNameInput");
-  const startError = document.getElementById("startError");
+  // DOM
   const startScreen = document.getElementById("startScreen");
-  const playerScreen = document.getElementById("playerScreen");
-  const teamInfo = document.getElementById("teamInfo");
+  const gameScreen  = document.getElementById("gameScreen");
+  const teamInput   = document.getElementById("teamNameInput");
+  const startBtn    = document.getElementById("startBtn");
+  const startError  = document.getElementById("startError");
 
+  const artistInput = document.getElementById("artistInput");
+  const titleInput  = document.getElementById("titleInput");
+  const saveBtn     = document.getElementById("saveBtn");
+  const saveStatus  = document.getElementById("saveStatus");
+
+  // State
   let teamId = null;
 
-  /* ✅ Klick-Handler */
+  /* ✅ Team anlegen */
   startBtn.addEventListener("click", async () => {
     startError.textContent = "";
-
     const name = teamInput.value.trim();
+
     if (!name) {
       startError.textContent = "Bitte Teamnamen eingeben";
       return;
@@ -129,15 +145,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (error) {
       console.error(error);
-      startError.textContent = "Fehler beim Erstellen des Teams";
+      startError.textContent = "Fehler beim Start";
       return;
     }
 
     teamId = data.id;
 
     startScreen.style.display = "none";
-    playerScreen.style.display = "flex";
-    teamInfo.textContent = "Team-ID: " + teamId;
+    gameScreen.style.display  = "flex";
+  });
+
+  /* ✅ Antwort speichern (LIVE UPSERT) */
+  saveBtn.addEventListener("click", async () => {
+    if (!teamId) return;
+
+    const payload = {
+      team_id: teamId,
+      round: 1,
+      song: 1, // ✅ vorerst immer Song 1 (Navigation kommt danach)
+      artist: artistInput.value.trim() || null,
+      title:  titleInput.value.trim()  || null,
+      movie:  null
+    };
+
+    const { error } = await supabase
+      .from("answers")
+      .upsert(payload, { onConflict: "team_id,round,song" });
+
+    if (error) {
+      console.error(error);
+      saveStatus.textContent = "❌ Fehler beim Speichern";
+      return;
+    }
+
+    // Felder leeren
+    artistInput.value = "";
+    titleInput.value  = "";
+
+    saveStatus.textContent = "✅ Antwort live gespeichert (überschreibbar)";
   });
 
 });
