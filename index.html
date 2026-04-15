@@ -1,194 +1,89 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Hitster – Live</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hitster – Debug</title>
 
-<!-- ✅ SUPABASE CLIENT (Richtig!) -->
-<script src="https://unbase/supabase-js@2</script>
+<!-- Supabase korrekt einbinden -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 body {
-  font-family: system-ui, sans-serif;
-  background: linear-gradient(180deg,#0f172a,#020617);
-  color: white;
   margin: 0;
   height: 100vh;
-}
-
-/* ZENTRIERTE BILDSCHIRME */
-.screen {
-  position: fixed;
-  inset: 0;
+  background: #020617;
+  color: white;
+  font-family: system-ui, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .card {
+  background: #1f2937;
+  padding: 2rem;
+  border-radius: 16px;
   width: 360px;
-  background:#1f2937;
-  border-radius:18px;
-  padding:1.8rem;
-  text-align:center;
-  box-shadow: 0 20px 60px rgba(0,0,0,.45);
-}
-
-button {
-  background:#2563eb;
-  border:none;
-  color:white;
-  border-radius:999px;
-  padding:0.6rem 1.2rem;
-  font-size:1.05rem;
-  cursor:pointer;
+  text-align: center;
 }
 
 input {
-  width:100%;
-  padding:0.5rem;
-  margin-top:0.8rem;
-  border-radius:6px;
-  border:none;
+  width: 100%;
+  padding: 0.6rem;
+  margin-top: 1rem;
+  border-radius: 6px;
+  border: none;
 }
 
-.controls {
-  display:flex;
-  gap:0.75rem;
-  justify-content:center;
-  margin-top:1rem;
+button {
+  margin-top: 1.5rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.debug {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
 }
 </style>
 </head>
 
 <body>
 
-<!-- STARTSCREEN -->
-<div id="startScreen" class="screen">
-  <div class="card">
-    <h2>👥 Team anmelden</h2>
+<div class="card">
+  <h2>🧪 Debug‑Check</h2>
 
-    <input id="teamNameInput" placeholder="Teamname eingeben">
+  <input placeholder="Teamname (Test)">
 
-    <!-- ✅ bewusst tiefer -->
-    <div style="margin-top:1.6rem;">
-      <button onclick="startGame()">Spiel starten</button>
-    </div>
+  <button onclick="testSupabase()">Test Supabase</button>
 
-    <div id="startError" style="margin-top:0.75rem;font-size:0.9rem;color:#fca5a5;"></div>
-  </div>
-</div>
-
-<!-- PLAYER -->
-<div id="playerScreen" class="screen" style="display:none;">
-  <div class="card">
-    <h2 id="roundTitle">🎵 Runde 1 – Hitster</h2>
-    <p id="questionText">Interpret & Songtitel</p>
-
-    <audio id="player"></audio>
-
-    <div class="controls">
-      <button onclick="toggle()">▶ / ⏸</button>
-    </div>
-
-    <input id="artistInput" placeholder="Interpret">
-    <input id="titleInput" placeholder="Songtitel">
-    <input id="movieInput" placeholder="Filmtitel" style="display:none;">
-
-    <div style="margin-top:1.2rem;">
-      <button onclick="saveAnswer()">Antwort speichern</button>
-    </div>
-
-    <p id="status" style="margin-top:0.6rem;font-size:0.9rem;"></p>
+  <div id="debug" class="debug">
+    Seite geladen ✅
   </div>
 </div>
 
 <script>
-/* ✅ SUPABASE INIT */
-const supabase = window.supabase.createClient(
-  "https://havaoqxnxnlmyfbldyic.supabase.co",
-  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
-);
+function testSupabase() {
+  const debug = document.getElementById("debug");
 
-let teamId = null;
-let roundIndex = 0;
-let songIndex = 0;
-
-/* ✅ STARTSPIEL */
-async function startGame() {
-  const name = teamNameInput.value.trim();
-  startError.textContent = "";
-
-  if (!name) {
-    startError.textContent = "Bitte Teamnamen eingeben";
+  if (!window.supabase) {
+    debug.textContent = "❌ Supabase nicht geladen";
     return;
   }
 
-  const { data, error } = await supabase
-    .from("teams")
-    .insert({ name })
-    .select()
-    .single();
+  const client = window.supabase.createClient(
+    "https://havaoqxnxnlmyfbldyic.supabase.co",
+    "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+  );
 
-  if (error) {
-    startError.textContent = "Fehler beim Starten – bitte Seite neu laden";
-    console.error(error);
-    return;
-  }
-
-  teamId = data.id;
-
-  startScreen.style.display = "none";
-  playerScreen.style.display = "flex";
-
-  updateUI();
-}
-
-/* ✅ UI ANPASSEN */
-function updateUI() {
-  if (roundIndex === 0) {
-    roundTitle.textContent = "🎵 Runde 1 – Hitster";
-    questionText.textContent = "Interpret & Songtitel";
-    artistInput.style.display = "block";
-    titleInput.style.display = "block";
-    movieInput.style.display = "none";
-  } else {
-    roundTitle.textContent = "🎬 Runde 2 – Filmmusik";
-    questionText.textContent = "Aus welchem Film?";
-    artistInput.style.display = "none";
-    titleInput.style.display = "none";
-    movieInput.style.display = "block";
-  }
-}
-
-/* ✅ AUDIO */
-function toggle() {
-  player.paused ? player.play() : player.pause();
-}
-
-/* ✅ ANTWORT SPEICHERN (LIVE) */
-async function saveAnswer() {
-  if (!teamId) return;
-
-  const payload = {
-    team_id: teamId,
-    round: roundIndex + 1,
-    song: songIndex + 1,
-    artist: artistInput.value || null,
-    title: titleInput.value || null,
-    movie: movieInput.value || null
-  };
-
-  await supabase
-    .from("answers")
-    .upsert(payload, { onConflict: "team_id,round,song" });
-
-  artistInput.value = "";
-  titleInput.value = "";
-  movieInput.value = "";
-
-  status.textContent = "✅ Gespeichert (live)";
+  debug.textContent = "✅ Supabase geladen & Client erstellt";
 }
 </script>
 
