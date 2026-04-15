@@ -4,93 +4,38 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hitster – Runde 1</title>
+
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: #111827;
+      background: linear-gradient(180deg, #0f172a, #020617);
       color: white;
       display: flex;
       height: 100vh;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       margin: 0;
     }
-    .box {
+
+    .card {
       width: 360px;
       padding: 1.5rem;
-      border-radius: 12px;
+      border-radius: 16px;
       background: #1f2937;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
       text-align: center;
     }
 
-    .player-container {
+    .player-wrapper {
       position: relative;
       margin-top: 1rem;
-      border-radius: 8px;
+      border-radius: 12px;
       overflow: hidden;
     }
 
-    /* Deezer iframe */
     iframe {
       width: 100%;
-      height: 90px;
+      height: 90px; /* Deezer Track Widget */
       border: none;
     }
 
-    /* Sichtschutz: verdeckt Cover + Text */
-    .mask {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #1f2937;
-      pointer-events: none;
-    }
-
-    /* Öffnung für Play‑Button */
-    .mask-hole {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: transparent;
-      pointer-events: none;
-    }
-
-    /* Loch simulieren */
-    .mask::after {
-      content: "";
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #000;
-      mix-blend-mode: destination-out;
-    }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h2>🎶 Hitster – Runde 1</h2>
-    <p>Höre genau hin!</p>
-
-    <div class="player-container">
-      <iframe
-        src="https://widget.deezer.com/widget/dark/track/4538913">
-      </iframe>
-
-      <!-- Sichtschutz -->
-      <div class="mask"></div>
-    </div>
-
-    <p style="margin-top:1rem;font-size:0.85rem;opacity:0.7">
-      Titel & Interpret sind verborgen
-    </p>
-  </div>
-</body>
-</html>
