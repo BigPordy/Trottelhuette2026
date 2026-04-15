@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hitster – Debug</title>
+<title>Hitster – Live (Phase B / Schritt 1)</title>
 
-<!-- Supabase korrekt einbinden -->
+<!-- ✅ Supabase korrekt einbinden -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
@@ -15,6 +15,12 @@ body {
   background: #020617;
   color: white;
   font-family: system-ui, sans-serif;
+}
+
+/* Screens */
+.screen {
+  position: fixed;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,6 +34,7 @@ body {
   text-align: center;
 }
 
+/* Form */
 input {
   width: 100%;
   padding: 0.6rem;
@@ -47,43 +54,75 @@ button {
   cursor: pointer;
 }
 
-.debug {
-  margin-top: 1rem;
-  font-size: 0.85rem;
-  opacity: 0.8;
+.error {
+  margin-top: 0.75rem;
+  color: #fca5a5;
+  font-size: 0.9rem;
 }
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h2>🧪 Debug‑Check</h2>
+<!-- START -->
+<div id="startScreen" class="screen">
+  <div class="card">
+    <h2>👥 Team anmelden</h2>
 
-  <input placeholder="Teamname (Test)">
+    <input id="teamNameInput" placeholder="Teamname eingeben" />
 
-  <button onclick="testSupabase()">Test Supabase</button>
+    <button onclick="startGame()">Spiel starten</button>
 
-  <div id="debug" class="debug">
-    Seite geladen ✅
+    <div id="startError" class="error"></div>
+  </div>
+</div>
+
+<!-- PLAYER (Dummy, nur zur Bestätigung) -->
+<div id="playerScreen" class="screen" style="display:none;">
+  <div class="card">
+    <h2>✅ Team ist live</h2>
+    <p>Team wurde erfolgreich angelegt.</p>
+    <p id="teamInfo"></p>
   </div>
 </div>
 
 <script>
-function testSupabase() {
-  const debug = document.getElementById("debug");
+/* ✅ Supabase Client */
+const supabase = window.supabase.createClient(
+  "https://havaoqxnxnlmyfbldyic.supabase.co",
+  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+);
 
-  if (!window.supabase) {
-    debug.textContent = "❌ Supabase nicht geladen";
+let teamId = null;
+
+/* ✅ Start Game: Team anlegen */
+async function startGame() {
+  const name = teamNameInput.value.trim();
+  startError.textContent = "";
+
+  if (!name) {
+    startError.textContent = "Bitte Teamnamen eingeben";
     return;
   }
 
-  const client = window.supabase.createClient(
-    "https://havaoqxnxnlmyfbldyic.supabase.co",
-    "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
-  );
+  const { data, error } = await supabase
+    .from("teams")
+    .insert({ name })
+    .select()
+    .single();
 
-  debug.textContent = "✅ Supabase geladen & Client erstellt";
+  if (error) {
+    console.error(error);
+    startError.textContent = "Fehler beim Anlegen des Teams";
+    return;
+  }
+
+  teamId = data.id;
+
+  // ✅ UI wechseln
+  startScreen.style.display = "none";
+  playerScreen.style.display = "flex";
+  teamInfo.textContent = "Team-ID: " + teamId;
 }
 </script>
 
