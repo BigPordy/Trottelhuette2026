@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hitster – Host‑Modus</title>
+
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background:#020617;
+  color:white;
+  margin:0;
+}
+
+h1,h2,h3 { margin:0.5rem 0; }
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 1rem;
+}
+
+.card {
+  background:#1f2937;
+  border-radius:12px;
+  padding:1rem;
+  margin-bottom:1rem;
+}
+
+textarea {
+  width:100%;
+  height:120px;
+  background:#0f172a;
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:0.5rem;
+}
+
+button {
+  background:#2563eb;
+  color:white;
+  border:none;
+  border-radius:999px;
+  padding:0.4rem 1rem;
+  cursor:pointer;
+  margin-top:0.5rem;
+}
+
+.team {
+  border-top:1px solid #334155;
+  padding-top:0.5rem;
+  margin-top:0.5rem;
+}
+
+.song {
+  margin-left:1rem;
+}
+
+input[type=checkbox] {
+  transform: scale(1.2);
+  margin-right:0.3rem;
+}
+
+.score {
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h1>🎤 Hitster – Host‑Modus</h1>
+
+  <!-- IMPORT -->
+  <div class="card">
+    <h2>Antworten importieren</h2>
+    <p>Teams kopieren ihren <code>localStorage.answers</code>‑Inhalt hier hinein:</p>
+    <textarea id="importInput"></textarea>
+    <br>
+    <button onclick="importAnswers()">Antworten laden</button>
+  </div>
+
+  <!-- RUNDE 1 -->
+  <div class="card">
+    <h2>🎵 Runde 1 – Musik</h2>
+    <div id="round1"></div>
+  </div>
+
+  <!-- RUNDE 2 -->
+  <div class="card">
+    <h2>🎬 Runde 2 – Filmmusik</h2>
+    <div id="round2"></div>
+  </div>
+
+  <!-- ERGEBNIS -->
+  <div class="card">
+    <h2>🏆 Leaderboard</h2>
+    <div id="leaderboard"></div>
+  </div>
+</div>
+
+<script>
+let teams = []; // {name, answers, score}
+
+/* IMPORT */
+function importAnswers() {
+  try {
+    const data = JSON.parse(importInput.value);
+
+    teams.push({
+      name: prompt("Teamname?"),
+      answers: data,
+      score: 0
+    });
+
+    render();
+  } catch {
+    alert("Ungültiges JSON");
+  }
+}
+
+/* RENDER */
+function render() {
+  renderRound1();
+  renderRound2();
+  renderLeaderboard();
+}
+
+/* RUNDE 1 */
+function renderRound1() {
+  const container = document.getElementById("round1");
+  container.innerHTML = "";
+
+  teams.forEach(team => {
+    let teamDiv = document.createElement("div");
+    teamDiv.className = "team";
+    teamDiv.innerHTML = `<h3>${team.name}</h3>`;
+
+    Object.entries(team.answers)
+      .filter(([k]) => k.startsWith("0-")) // roundIndex 0
+      .forEach(([key, ans]) => {
+        let div = document.createElement("div");
+        div.className = "song";
+
+        let interpret = document.createElement("input");
+        interpret.type="checkbox";
+
+        let titel = document.createElement("input");
+        titel.type="checkbox";
+
+        let bonus = document.createElement("input");
+        bonus.type="checkbox";
+
+        interpret.onchange = titel.onchange = bonus.onchange = () => updateScore();
+
+        div.innerHTML = `
+          Song ${key.split("-")[1]}:
+          <br>Antwort: ${ans.artist} – ${ans.title}<br>
+        `;
+        div.append(
+          interpret, document.createTextNode(" Interpret richtig "),
+          titel, document.createTextNode(" Titel richtig "),
+          bonus, document.createTextNode(" Bonus ")
+        );
+
+        teamDiv.append(div);
+      });
+
+    container.append(teamDiv);
+  });
+}
+
+/* RUNDE 2 */
+function renderRound2() {
+  const container = document.getElementById("round2");
+  container.innerHTML = "";
+
+  teams.forEach(team => {
+    let teamDiv = document.createElement("div");
+    teamDiv.className = "team";
+    teamDiv.innerHTML = `<h3>${team.name}</h3>`;
+
+    Object.entries(team.answers)
+      .filter(([k]) => k.startsWith("1-")) // roundIndex 1
+      .forEach(([key, ans]) => {
+        let div = document.createElement("div");
+        div.className = "song";
+
+        let correct = document.createElement("input");
+        correct.type="checkbox";
+        correct.onchange = () => updateScore();
+
+        div.innerHTML = `
+          Song ${key.split("-")[1]}:
+          <br>Antwort: ${ans.movie}<br>
+        `;
+        div.append(correct, document.createTextNode(" richtig (2 Punkte)"));
+
+        teamDiv.append(div);
+      });
+
+    container.append(teamDiv);
+  });
+}
+
+/* SCORE */
+function updateScore() {
+  teams.forEach(t => t.score = 0);
+
+  document.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    if (cb.checked) {
+      let text = cb.nextSibling.textContent;
+      if (text.includes("Bonus")) cb.closest(".team").dataset.score++,
+      cb.closest(".team");
+    }
+  });
+
+  renderLeaderboard();
+}
+
+/* LEADERBOARD */
+function renderLeaderboard() {
+  const lb = document.getElementById("leaderboard");
+  lb.innerHTML = "";
+
+  teams.sort((a,b)=>b.score-a.score).forEach(t=>{
+    lb.innerHTML += `<div class="score">${t.name}: ${t.score} Punkte</div>`;
+  });
+}
+</script>
+</body>
+</html>
