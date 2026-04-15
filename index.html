@@ -39,3 +39,45 @@
       border: none;
     }
 
+    /* ✅ Maske: verdeckt ALLES oberhalb der Controls */
+    .mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 55px; /* feinjustierbar */
+      background: #1f2937;
+      pointer-events: none;
+    }
+
+    .hint {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>🎵 Hitster – Runde 1</h2>
+    <p>Höre genau hin!</p>
+
+    <div class="player-wrapper">
+      <iframe
+        src="https://widget.deezer.com/widget/dark/track/4538913"
+        allow="encrypted-media"
+        loading="lazy">
+      </iframe>
+
+      <!-- Sichtschutz für Cover / Titel / Interpret -->
+      <div class="mask"></div>
+    </div>
+
+    <div class="hint">
+      Titel & Interpret sind verborgen
+    </div>
+  </div>
+</body>
+</html>
+``
