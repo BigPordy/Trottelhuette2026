@@ -228,7 +228,11 @@ songSelect.onchange=()=>{song=Number(songSelect.value);answersVisible=false;solu
 showAnswers.onclick=()=>{answersVisible=true;render();};
 showSolution.onclick=showSol;
 showScore.onclick=leaderboard;
-back.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden");};
+back.onclick=()=>{
+  scoreView.classList.add("hidden"); 
+  roundView.classList.remove("hidden"); 
+  solutionBox.classList.add("hidden");
+};
 
 const saveGame = document.getElementById("saveGame");
 
