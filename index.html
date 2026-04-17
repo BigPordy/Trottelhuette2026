@@ -232,10 +232,11 @@ document.addEventListener("DOMContentLoaded", () => {
       .select()
       .single();
 
-    if (error) {
-      startError.textContent = "Fehler beim Start";
-      return;
-    }
+if (error) {
+  console.error("Supabase-Fehler:", error);
+  startError.textContent = error.message;
+  return;
+}
 
     teamId = data.id;
     startScreen.style.display = "none";
