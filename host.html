@@ -3,119 +3,106 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hitster – Host‑Modus</title>
+  <title>Hitster – Host‑Modus (DEBUG)</title>
 
-  <!-- KORREKTER Supabase-Import -->
+  <!-- ✅ KORREKTER Supabase-Import -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
-    body {
-      margin: 0;
-      padding: 1rem;
-      font-family: system-ui, sans-serif;
-      background: #020617;
-      color: white;
+    body{
+      margin:0;padding:1rem;
+      font-family:system-ui,sans-serif;
+      background:#020617;color:white;
+    }
+    h1{margin:.2rem 0}
+    .hint{opacity:.7;margin-bottom:1rem}
+
+    .section{background:#1f2937;border-radius:14px;padding:1rem;margin-bottom:1rem}
+    .nav{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+
+    button{
+      padding:.45rem 1.2rem;
+      border-radius:999px;
+      border:none;
+      background:#2563eb;
+      color:white;
+      cursor:pointer;
+    }
+    button.secondary{background:#475569}
+    button.active{background:#16a34a}
+    select{padding:.35rem;border-radius:6px}
+
+    .header-row,.team{
+      display:grid;
+      grid-template-columns:360px 1fr;
+      column-gap:2.5rem;
+    }
+    .header-row{
+      border-bottom:3px solid #64748b;
+      opacity:.8;
+      padding-bottom:.6rem;
+      margin-bottom:.6rem;
+    }
+    .team{
+      padding:.9rem 0;
+      border-top:3px solid #475569;
+    }
+    .team:first-child{border-top:none}
+
+    .team-name{
+      font-size:1.4rem;
+      font-weight:700;
+      text-transform:uppercase;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      padding-right:1.5rem;
+      border-right:3px solid #64748b;
     }
 
-    h1 { margin: 0.2rem 0; }
-    .hint { opacity: 0.7; margin-bottom: 1rem; }
+    .answer{padding-left:1.5rem;font-size:1.15rem}
+    .answer.hint{opacity:.6;font-style:italic}
 
-    .section {
-      background: #1f2937;
-      border-radius: 14px;
-      padding: 1rem;
-      margin-bottom: 1rem;
+    .team.correct{background:#14532d}
+    .team.partial{background:#713f12}
+    .team.wrong{background:#7f1d1d}
+
+    .solution{
+      font-size:1.7rem;
+      font-weight:800;
+      text-align:center;
+      margin:1rem 0;
+      color:#22c55e;
     }
 
-    .nav {
-      display: flex;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-      align-items: center;
+    .scoreboard .row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      padding:.6rem 1rem;
+      border-bottom:2px solid #334155;
+    }
+    .scoreboard .gold{
+      background:linear-gradient(135deg,#8f7a00,#d4af37,#bfa200);
+      color:#1a1a1a;
+      font-weight:800;
     }
 
-    button {
-      padding: 0.45rem 1.2rem;
-      border-radius: 999px;
-      border: none;
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-    }
-
-    button.secondary { background: #475569; }
-    button.active { background: #16a34a; }
-    select { padding: 0.35rem; border-radius: 6px; }
-
-    .header-row, .team {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      column-gap: 2.5rem;
-    }
-
-    .header-row {
-      border-bottom: 3px solid #64748b;
-      opacity: 0.8;
-      padding-bottom: 0.6rem;
-      margin-bottom: 0.6rem;
-    }
-
-    .team {
-      padding: 0.9rem 0;
-      border-top: 3px solid #475569;
-    }
-
-    .team:first-child { border-top: none; }
-
-    .team-name {
-      font-size: 1.4rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      padding-right: 1.5rem;
-      border-right: 3px solid #64748b;
-    }
-
-    .answer { padding-left: 1.5rem; font-size: 1.15rem; }
-    .answer.hint { opacity: 0.6; font-style: italic; }
-
-    .solution {
-      font-size: 1.7rem;
-      font-weight: 800;
-      text-align: center;
-      margin: 1rem 0;
-      color: #22c55e;
-    }
-
-    .scoreboard .row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      border-bottom: 2px solid #334155;
-      padding: 0.6rem 1rem;
-    }
-
-    .scoreboard .gold {
-      background: linear-gradient(135deg,#8f7a00,#d4af37,#bfa200);
-      color: #1a1a1a;
-      font-weight: 800;
-    }
-
-    .hidden { display: none; }
+    .hidden{display:none}
   </style>
 </head>
 
 <body>
 
-<h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">Antworten → Lösung → Bewertung → Zwischenstand</div>
+<h1>🎤 Hitster – Host‑Modus (DEBUG)</h1>
+<div class="hint">DEBUG-Version mit Guard-Logs</div>
 
 <div class="section nav">
   <button id="r1" class="active">🎵 Hitster – Klassik</button>
   <button id="r2">🎬 Filmmusik</button>
+
   Song:
   <select id="songSelect"></select>
+
   <button id="showAnswers" class="secondary">👀 Antworten anzeigen</button>
   <button id="showSolution" class="secondary">✅ Richtige Antwort anzeigen</button>
   <button id="showScoreBtn" class="secondary">🏆 Zwischenstand anzeigen</button>
@@ -134,17 +121,24 @@
 <div id="scoreView" class="section hidden">
   <h2>🏆 Zwischenstand</h2>
   <div id="scoreboard" class="scoreboard"></div>
-  <button id="backBtn" class="secondary">⬅ Zurück zum Spiel</button>
+  <button id="backBtn" class="secondary">⬅ Zurück</button>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  const supabase = window.supabase.createClient(
+  console.log("[DEBUG] DOMContentLoaded gestartet");
+
+  /* ===== Guard: Supabase ===== */
+  console.assert(window.supabase, "[DEBUG] window.supabase NICHT geladen");
+
+  const db = window.supabase.createClient(
     "https://havaoqxnxnlmyfbldyic.supabase.co",
     "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
   );
+  console.log("[DEBUG] Supabase Client erstellt", db);
 
+  /* ===== DOM ===== */
   const r1 = document.getElementById("r1");
   const r2 = document.getElementById("r2");
   const songSelect = document.getElementById("songSelect");
@@ -159,7 +153,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const solutionBox = document.getElementById("solutionBox");
   const scoreboard = document.getElementById("scoreboard");
 
-  const songCounts = { 1: 15, 2: 16 };
+  console.assert(r1 && r2 && songSelect && showAnswers && showSolution && showScoreBtn,
+    "[DEBUG] Ein oder mehrere DOM-Elemente fehlen");
+
+  /* ===== State ===== */
+  const songCounts = {1:15,2:16};
   let round = 1;
   let song = 1;
   let teams = [];
@@ -167,78 +165,91 @@ document.addEventListener("DOMContentLoaded", () => {
   let answersVisible = false;
   let scores = {};
 
+  /* ===== Test-Lösungen (DEBUG minimal) ===== */
   const solutions = {
-    1: {
-      1: { disp: "Ludwig van Beethoven – Für Elise" }
-    },
-    2: {
-      1: { disp: "Forrest Gump" }
-    }
+    1: {1:{disp:"Ludwig van Beethoven – Für Elise"}},
+    2: {1:{disp:"Forrest Gump"}}
   };
 
-  async function load() {
-    teams = (await supabase.from("teams").select("*").order("created_at")).data || [];
-    answersData = (await supabase.from("answers").select("*")).data || [];
-    teams.forEach(t => scores[t.id] = scores[t.id] || 0);
+  /* ===== Daten ===== */
+  async function load(){
+    console.log("[DEBUG] load() gestartet");
+
+    const tRes = await db.from("teams").select("*").order("created_at");
+    console.log("[DEBUG] teams result", tRes);
+    teams = tRes.data || [];
+
+    const aRes = await db.from("answers").select("*");
+    console.log("[DEBUG] answers result", aRes);
+    answersData = aRes.data || [];
+
+    teams.forEach(t=>scores[t.id]=scores[t.id]||0);
+
+    console.log("[DEBUG] Teams:", teams.length, "Answers:", answersData.length);
     render();
   }
 
-  function populateSongs() {
-    songSelect.innerHTML = "";
-    for (let i = 1; i <= songCounts[round]; i++) {
-      songSelect.innerHTML += `<option value="${i}">Song ${i}</option>`;
+  function populateSongs(){
+    console.log("[DEBUG] populateSongs()", round);
+    songSelect.innerHTML="";
+    for(let i=1;i<=songCounts[round];i++){
+      songSelect.innerHTML+=`<option value="${i}">Song ${i}</option>`;
     }
-    song = 1;
+    song=1;
   }
 
-  function render() {
-    answersEl.innerHTML = "";
-    teams.forEach(team => {
-      const row = document.createElement("div");
-      row.className = "team";
-      row.innerHTML = `<div class="team-name">${team.name}</div>`;
-      const a = answersData.find(x => x.team_id === team.id && x.round === round && x.song === song);
+  function render(){
+    console.log("[DEBUG] render()", {round, song, answersVisible});
+    answersEl.innerHTML="";
+    teams.forEach(team=>{
+      const row=document.createElement("div");
+      row.className="team";
+      row.id=`team-${team.id}`;
+      row.innerHTML=`<div class="team-name">${team.name}</div>`;
+      const a=answersData.find(x=>x.team_id===team.id && x.round===round && x.song===song);
 
-      if (!answersVisible) {
-        row.innerHTML += `<div class="answer hint"></div>`;
-      } else if (!a) {
-        row.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
+      if(!answersVisible){
+        row.innerHTML+=`<div class="answer hint"></div>`;
+      } else if(!a){
+        row.innerHTML+=`<div class="answer hint">Keine Antwort</div>`;
       } else {
-        row.innerHTML += `<div class="answer">${round === 1 ? a.artist + " – " + a.title : a.movie}</div>`;
+        row.innerHTML+=`<div class="answer">${round===1 ? a.artist+" – "+a.title : a.movie}</div>`;
       }
       answersEl.appendChild(row);
     });
   }
 
-  function showSolutionNow() {
-    solutionBox.textContent = solutions[round][song]?.disp || "";
+  function showSolutionNow(){
+    console.log("[DEBUG] showSolutionNow()", round, song);
+    const sol=solutions[round]?.[song];
+    console.assert(sol, "[DEBUG] Keine Lösung gefunden für", round, song);
+    solutionBox.textContent=sol?.disp || "KEINE LÖSUNG";
     solutionBox.classList.remove("hidden");
   }
 
-  function openScoreboard() {
+  function openScoreboard(){
+    console.log("[DEBUG] openScoreboard()");
     roundView.classList.add("hidden");
     scoreView.classList.remove("hidden");
-    scoreboard.innerHTML = "";
-    const sorted = [...teams].sort((a, b) => scores[b.id] - scores[a.id]);
-    sorted.forEach((t, i) => {
-      const div = document.createElement("div");
-      div.className = "row";
-      if (i === sorted.length - 1) div.classList.add("gold");
-      div.innerHTML = `
-        <span>${i + 1}. ${t.name}</span>
-        <span>${i === sorted.length - 1 ? "🏆 Dummenpärchen 2026" : scores[t.id] + " Punkte"}</span>
-      `;
+    scoreboard.innerHTML="";
+
+    const sorted=[...teams].sort((a,b)=>scores[b.id]-scores[a.id]);
+    sorted.forEach((t,i)=>{
+      const div=document.createElement("div");
+      div.className="row";
+      div.innerHTML=`<span>${i+1}. ${t.name}</span><span>${scores[t.id]} Punkte</span>`;
       scoreboard.appendChild(div);
     });
   }
 
-  r1.onclick = () => { round = 1; populateSongs(); answersVisible = false; solutionBox.classList.add("hidden"); render(); };
-  r2.onclick = () => { round = 2; populateSongs(); answersVisible = false; solutionBox.classList.add("hidden"); render(); };
-  songSelect.onchange = () => { answersVisible = false; solutionBox.classList.add("hidden"); render(); };
-  showAnswers.onclick = () => { answersVisible = true; render(); };
-  showSolution.onclick = showSolutionNow;
-  showScoreBtn.onclick = openScoreboard;
-  backBtn.onclick = () => { scoreView.classList.add("hidden"); roundView.classList.remove("hidden"); };
+  /* ===== Events ===== */
+  r1.onclick=()=>{console.log("[DEBUG] r1 click"); round=1; populateSongs(); answersVisible=false; render();};
+  r2.onclick=()=>{console.log("[DEBUG] r2 click"); round=2; populateSongs(); answersVisible=false; render();};
+  songSelect.onchange=()=>{console.log("[DEBUG] song change"); answersVisible=false; render();};
+  showAnswers.onclick=()=>{console.log("[DEBUG] showAnswers click"); answersVisible=true; render();};
+  showSolution.onclick=showSolutionNow;
+  showScoreBtn.onclick=openScoreboard;
+  backBtn.onclick=()=>{console.log("[DEBUG] back"); scoreView.classList.add("hidden"); roundView.classList.remove("hidden");};
 
   populateSongs();
   load();
