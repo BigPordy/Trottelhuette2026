@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hitster – Host‑Modus</title>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<!-- ✅ Supabase Client -->
+https://unpkg.com/@supabase/supabase-js@2>
 
 <style>
 body {
@@ -74,6 +75,9 @@ select {
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
+<div style="font-size:0.8rem;opacity:0.7;margin-bottom:0.5rem">
+  🟢 Live verbunden (Realtime)
+</div>
 
 <div class="section">
   <h2>Navigation</h2>
@@ -96,6 +100,7 @@ select {
 </div>
 
 <script>
+/* ✅ Supabase */
 const supabase = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
@@ -109,16 +114,42 @@ let teams = [];
 let answers = [];
 let scores = {};
 
-/* INIT */
-async function init() {
-  const t = await supabase.from("teams").select("*");
-  const a = await supabase.from("answers").select("*");
+/* ✅ ZENTRALES DATEN-REFRESH */
+async function refreshData() {
+  const { data: teamsData } = await supabase.from("teams").select("*");
+  const { data: answersData } = await supabase.from("answers").select("*");
 
-  teams = t.data || [];
-  answers = a.data || [];
+  teams = teamsData || [];
+  answers = answersData || [];
 
+  render();
+}
+
+/* ✅ REALTIME */
+function subscribeRealtime() {
+  supabase
+    .channel("host-live")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "answers" },
+      () => refreshData()
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "teams" },
+      () => refreshData()
+    )
+    .subscribe();
+}
+
+/* ✅ INIT */
+async function initHost() {
+  await refreshData();
+  subscribeRealtime();
   setRound(1);
 }
+
+/* === AB HIER: DEIN CODE UNVERÄNDERT === */
 
 function setRound(r) {
   round = r;
@@ -199,7 +230,7 @@ function renderLeaderboard() {
 }
 
 /* START */
-init();
+initHost();
 </script>
 
 </body>
