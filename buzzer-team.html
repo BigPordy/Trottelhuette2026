@@ -4,6 +4,63 @@
   <meta charset="UTF-8">
   <title>Buzzer – Team</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  body {
+  margin: 0;
+  padding: 0;
+  background: #111;
+  color: white;
+  font-family: system-ui, sans-serif;
+  text-align: center;
+}
+
+#buzzerWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* ganzer Bildschirm */
+}
+
+#buzzButton {
+  width: 70vmin;
+  height: 70vmin;
+  max-width: 420px;
+  max-height: 420px;
+
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at top,
+    #ff5c5c,
+    #c00000
+  );
+
+  border: none;
+  color: white;
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+
+  cursor: pointer;
+  box-shadow:
+    0 18px 0 #7a0000,
+    0 25px 40px rgba(0,0,0,0.6);
+
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+
+/* Druck-Effekt */
+#buzzButton:active {
+  transform: translateY(8px);
+  box-shadow:
+    0 10px 0 #7a0000,
+    0 15px 25px rgba(0,0,0,0.5);
+}
+
+/* Falls gesperrt */
+#buzzButton:disabled {
+  background: #555;
+  box-shadow: none;
+  cursor: not-allowed;
+}
 </head>
 <body>
 
@@ -18,7 +75,9 @@
 
 <div id="buzzArea" style="display:none;">
   <h2>Bereit zum Buzzern</h2>
-  <button id="buzzButton">🔔 BUZZ!</button>
+<div id="buzzerWrapper">
+  <button id="buzzButton">BUZZ</button>
+</div>
 </div>
 
 <script>
