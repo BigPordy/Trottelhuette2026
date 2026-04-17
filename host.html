@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hitster – Host‑Modus</title>
+  <title>Hitster – Host-Modus</title>
 
   <!-- =======================
        SUPABASE SCRIPT
@@ -24,6 +24,10 @@
       color: white;
     }
 
+    h1, h2 {
+      margin-top: 0.5rem;
+    }
+
     .section {
       background: #1f2937;
       border-radius: 14px;
@@ -33,68 +37,124 @@
 
     .nav {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.75rem;
       flex-wrap: wrap;
       align-items: center;
       margin-bottom: 0.75rem;
     }
 
     button {
-      padding: 0.4rem 1rem;
+      padding: 0.45rem 1.2rem;
       border-radius: 999px;
       border: none;
       background: #2563eb;
       color: white;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
+    }
+
+    button.secondary {
+      background: #475569;
     }
 
     select {
-      padding: 0.3rem;
+      padding: 0.35rem;
       border-radius: 6px;
       border: none;
+      font-size: 0.95rem;
     }
 
+    /* =======================
+       TEAM- & ANTWORT-LAYOUT
+       BEGIN
+       ======================= */
     .team {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      column-gap: 2rem;
+      align-items: center;
       border-top: 1px solid #334155;
-      padding-top: 0.75rem;
-      margin-top: 0.75rem;
+      padding: 0.9rem 0;
     }
 
     .team-name {
-      font-weight: bold;
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .answer {
-      margin-left: 0.5rem;
-      opacity: 0.9;
+      font-size: 1.15rem;
+      opacity: 0.95;
     }
 
-    .hint {
-      font-size: 0.8rem;
+    .answer.hint {
       opacity: 0.6;
+      font-style: italic;
     }
+
+    .solution {
+      font-size: 1.6rem;
+      font-weight: 700;
+      text-align: center;
+      margin: 1rem 0;
+      color: #22c55e;
+    }
+    /* =======================
+       TEAM- & ANTWORT-LAYOUT
+       ENDE
+       ======================= */
   </style>
 </head>
 
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">E1 – neutrale Antwortanzeige</div>
+<div class="hint">E2 – Antworten anzeigen · Lösung separat einblenden</div>
 
+<!-- =======================
+     NAVIGATION
+     BEGIN
+     ======================= -->
 <div class="section">
   <div class="nav">
-    <button id="r1Btn">🎵 Runde 1</button>
-    <button id="r2Btn">🎬 Runde 2</button>
+    <button onclick="setRound(1)">🎵 Runde 1</button>
+    <button onclick="setRound(2)">🎬 Runde 2</button>
+
     Song:
     <select id="songSelect"></select>
+
+    <button class="secondary" onclick="showSolution()">✅ Lösung anzeigen</button>
   </div>
 </div>
+<!-- =======================
+     NAVIGATION
+     ENDE
+     ======================= -->
 
+<!-- =======================
+     LÖSUNG
+     BEGIN
+     ======================= -->
+<div id="solutionBox" class="solution" style="display:none;"></div>
+<!-- =======================
+     LÖSUNG
+     ENDE
+     ======================= -->
+
+<!-- =======================
+     ANTWORTEN
+     BEGIN
+     ======================= -->
 <div class="section">
   <h2>Antworten</h2>
   <div id="answersContainer"></div>
 </div>
+<!-- =======================
+     ANTWORTEN
+     ENDE
+     ======================= -->
 
 <script>
 /* =======================
@@ -124,9 +184,29 @@ document.addEventListener("DOMContentLoaded", () => {
   let round = 1;
   let song = 1;
   let teams = [];
-  let answersData = [];
+  let answers = [];
   /* =======================
      STATE
+     ENDE
+     ======================= */
+
+  /* =======================
+     OFFIZIELLE LÖSUNGEN
+     (für Phase E2)
+     BEGIN
+     ======================= */
+  const solutions = {
+    1: {
+      1: "Beethoven – Für Elise",
+      2: "Vivaldi – Frühling"
+    },
+    2: {
+      1: "Forrest Gump",
+      2: "8 Mile"
+    }
+  };
+  /* =======================
+     OFFIZIELLE LÖSUNGEN
      ENDE
      ======================= */
 
@@ -137,11 +217,35 @@ document.addEventListener("DOMContentLoaded", () => {
       .order("created_at", { ascending: true })
     ).data || [];
 
-    answersData = (await supabaseClient
+    answers = (await supabaseClient
       .from("answers")
       .select("*")
     ).data || [];
 
+    render();
+  }
+
+  function populateSongs() {
+    const sel = document.getElementById("songSelect");
+    sel.innerHTML = "";
+    for (let i = 1; i <= songCounts[round]; i++) {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `Song ${i}`;
+      sel.appendChild(opt);
+    }
+    song = 1;
+    sel.onchange = () => {
+      song = Number(sel.value);
+      hideSolution();
+      render();
+    };
+  }
+
+  function setRound(r) {
+    round = r;
+    hideSolution();
+    populateSongs();
     render();
   }
 
@@ -150,57 +254,42 @@ document.addEventListener("DOMContentLoaded", () => {
     container.innerHTML = "";
 
     teams.forEach(team => {
-      const block = document.createElement("div");
-      block.className = "team";
-      block.innerHTML = `<div class="team-name">${team.name}</div>`;
+      const row = document.createElement("div");
+      row.className = "team";
 
-      const ans = answersData.find(a =>
+      row.innerHTML = `<div class="team-name">${team.name}</div>`;
+
+      const ans = answers.find(a =>
         a.team_id === team.id &&
         a.round === round &&
         a.song === song
       );
 
       if (ans) {
-        block.innerHTML +=
-          round === 1
-            ? `<div class="answer">${ans.artist} – ${ans.title}</div>`
-            : `<div class="answer">${ans.movie}</div>`;
+        row.innerHTML += round === 1
+          ? `<div class="answer">${ans.artist} – ${ans.title}</div>`
+          : `<div class="answer">${ans.movie}</div>`;
       } else {
-        block.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
+        row.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
       }
 
-      container.appendChild(block);
+      container.appendChild(row);
     });
   }
 
-  function populateSongs() {
-    const select = document.getElementById("songSelect");
-    select.innerHTML = "";
-    for (let i = 1; i <= songCounts[round]; i++) {
-      const opt = document.createElement("option");
-      opt.value = i;
-      opt.textContent = `Song ${i}`;
-      select.appendChild(opt);
+  function showSolution() {
+    const box = document.getElementById("solutionBox");
+    const text = solutions[round]?.[song];
+    if (text) {
+      box.textContent = `Lösung: ${text}`;
+      box.style.display = "block";
     }
-    song = 1;
   }
 
-  document.getElementById("r1Btn").onclick = () => {
-    round = 1;
-    populateSongs();
-    refreshData();
-  };
-
-  document.getElementById("r2Btn").onclick = () => {
-    round = 2;
-    populateSongs();
-    refreshData();
-  };
-
-  document.getElementById("songSelect").onchange = e => {
-    song = Number(e.target.value);
-    render();
-  };
+  function hideSolution() {
+    const box = document.getElementById("solutionBox");
+    box.style.display = "none";
+  }
 
   populateSongs();
   refreshData();
@@ -213,3 +302,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+``
