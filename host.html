@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hitster – Host‑Modus</title>
 
-  <!-- ✅ KORREKTER SUPABASE-IMPORT (WICHTIG) -->
+  <!-- ✅ KORREKTER SUPABASE-IMPORT -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
@@ -50,12 +50,9 @@
     .team:first-child{border-top:none}
 
     .team-name{
-      font-size:1.4rem;
-      font-weight:700;
+      font-size:1.4rem;font-weight:700;
       text-transform:uppercase;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
       padding-right:1.5rem;
       border-right:3px solid #64748b
     }
@@ -125,57 +122,57 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded",()=>{
 
   const db = window.supabase.createClient(
     "https://havaoqxnxnlmyfbldyic.supabase.co",
     "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
   );
 
-  const r1 = document.getElementById("r1");
-  const r2 = document.getElementById("r2");
-  const songSelect = document.getElementById("songSelect");
-  const showAnswers = document.getElementById("showAnswers");
-  const showSolution = document.getElementById("showSolution");
-  const showScoreBtn = document.getElementById("showScoreBtn");
-  const backBtn = document.getElementById("backBtn");
+  const r1=document.getElementById("r1");
+  const r2=document.getElementById("r2");
+  const songSelect=document.getElementById("songSelect");
+  const showAnswers=document.getElementById("showAnswers");
+  const showSolution=document.getElementById("showSolution");
+  const showScoreBtn=document.getElementById("showScoreBtn");
+  const backBtn=document.getElementById("backBtn");
 
-  const roundView = document.getElementById("roundView");
-  const scoreView = document.getElementById("scoreView");
-  const answersEl = document.getElementById("answers");
-  const solutionBox = document.getElementById("solutionBox");
-  const scoreboard = document.getElementById("scoreboard");
+  const roundView=document.getElementById("roundView");
+  const scoreView=document.getElementById("scoreView");
+  const answersEl=document.getElementById("answers");
+  const solutionBox=document.getElementById("solutionBox");
+  const scoreboard=document.getElementById("scoreboard");
 
-  const songCounts = {1:15, 2:16};
-  let round = 1;
-  let song = 1;
-  let teams = [];
-  let answersData = [];
-  let answersVisible = false;
-  let solutionVisible = false;
-  let scores = {};
+  const songCounts={1:15,2:16};
+  let round=1;
+  let song=1;
+  let teams=[];
+  let answersData=[];
+  let answersVisible=false;
+  let scores={};
 
-  const norm = s => (s||"").toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  const norm=s=>(s||"").toLowerCase().normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
     .replace(/[^a-z0-9]/g,"");
 
   function similarity(a,b){
     let m=0;
-    for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i]===b[i]) m++;
+    for(let i=0;i<Math.min(a.length,b.length);i++)
+      if(a[i]===b[i]) m++;
     return m/Math.max(a.length,b.length);
   }
 
   function classifyR1(c,t){
-    if(c>=.85 && t>=.85) return {cls:"correct", pts:3};
-    if(c>=.6 || t>=.6) return {cls:"partial", pts:1};
-    return {cls:"wrong", pts:0};
+    if(c>=.85 && t>=.85) return {cls:"correct",pts:3};
+    if(c>=.6 || t>=.6) return {cls:"partial",pts:1};
+    return {cls:"wrong",pts:0};
   }
-
   function classifyR2(s){
-    if(s>=.8) return {cls:"correct", pts:2};
-    return {cls:"wrong", pts:0};
+    if(s>=.8) return {cls:"correct",pts:2};
+    return {cls:"wrong",pts:0};
   }
 
+  /* === VOLLSTÄNDIGE LÖSUNGEN === */
   const solutions = {
     1:{
       1:{disp:"Ludwig van Beethoven – Für Elise",c:["beethoven"],t:["fur elise","fuer elise"]},
@@ -215,17 +212,16 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   async function load(){
-    teams = (await db.from("teams").select("*").order("created_at")).data || [];
-    answersData = (await db.from("answers").select("*")).data || [];
-    teams.forEach(t => scores[t.id] = scores[t.id] || 0);
+    teams=(await db.from("teams").select("*").order("created_at")).data||[];
+    answersData=(await db.from("answers").select("*")).data||[];
+    teams.forEach(t=>scores[t.id]=scores[t.id]||0);
     render();
   }
 
   function populateSongs(){
     songSelect.innerHTML="";
-    for(let i=1;i<=songCounts[round];i++){
-      songSelect.innerHTML += `<option value="${i}">Song ${i}</option>`;
-    }
+    for(let i=1;i<=songCounts[round];i++)
+      songSelect.innerHTML+=`<option value="${i}">Song ${i}</option>`;
     song=1;
   }
 
@@ -236,6 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
       row.className="team";
       row.id=`team-${team.id}`;
       row.innerHTML=`<div class="team-name">${team.name}</div>`;
+
       const a=answersData.find(x=>x.team_id===team.id && x.round===round && x.song===song);
 
       if(!answersVisible){
@@ -252,7 +249,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showSolutionNow(){
-    solutionVisible=true;
     solutionBox.textContent=solutions[round][song].disp;
     solutionBox.classList.remove("hidden");
 
@@ -292,16 +288,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  r1.onclick=()=>{round=1;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");render()};
-  r2.onclick=()=>{round=2;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");render()};
-  songSelect.onchange=()=>{answersVisible=false;solutionBox.classList.add("hidden");render()};
-  showAnswers.onclick=()=>{answersVisible=true;render()};
+  r1.onclick=()=>{
+    round=1;
+    answersVisible=false;
+    solutionBox.classList.add("hidden");
+    r1.classList.add("active");
+    r2.classList.remove("active");
+    populateSongs();
+    render();
+  };
+  r2.onclick=()=>{
+    round=2;
+    answersVisible=false;
+    solutionBox.classList.add("hidden");
+    r2.classList.add("active");
+    r1.classList.remove("active");
+    populateSongs();
+    render();
+  };
+  songSelect.onchange=()=>{
+    answersVisible=false;
+    solutionBox.classList.add("hidden");
+    render();
+  };
+  showAnswers.onclick=()=>{answersVisible=true;render();};
   showSolution.onclick=showSolutionNow;
   showScoreBtn.onclick=openScoreboard;
-  backBtn.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden")};
+  backBtn.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden");};
 
   populateSongs();
   load();
+
 });
 </script>
 
