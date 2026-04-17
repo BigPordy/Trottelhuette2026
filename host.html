@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hitster – Host‑Modus</title>
 
   <!-- =======================
-       SUPABASE SCRIPT (UMD)
+       SUPABASE SCRIPT
        BEGIN
        ======================= -->
-  <script src="https://unpkg.com/@supe-js@2</script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <!-- =======================
        SUPABASE SCRIPT
        ENDE
@@ -84,10 +84,10 @@
 
 <div class="section">
   <div class="nav">
-    <button onclick="setRound(1)">🎵 Runde 1</button>
-    <button onclick="setRound(2)">🎬 Runde 2</button>
+    <button id="r1Btn">🎵 Runde 1</button>
+    <button id="r2Btn">🎬 Runde 2</button>
     Song:
-    <select id="songSelect" onchange="render()"></select>
+    <select id="songSelect"></select>
   </div>
 </div>
 
@@ -98,117 +98,115 @@
 
 <script>
 /* =======================
-   SUPABASE CLIENT
+   APP START
    BEGIN
    ======================= */
-const supabaseClient = window.supabase.createClient(
-  "https://havaoqxnxnlmyfbldyic.supabase.co",
-  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
-);
-/* =======================
-   SUPABASE CLIENT
-   ENDE
-   ======================= */
+document.addEventListener("DOMContentLoaded", () => {
 
-/* =======================
-   STATE
-   BEGIN
-   ======================= */
-const songCounts = { 1: 15, 2: 16 };
-let round = 1;
-let song = 1;
-let teams = [];
-let answersData = [];
-/* =======================
-   STATE
-   ENDE
-   ======================= */
+  /* =======================
+     SUPABASE CLIENT
+     BEGIN
+     ======================= */
+  const supabaseClient = window.supabase.createClient(
+    "https://havaoqxnxnlmyfbldyic.supabase.co",
+    "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+  );
+  /* =======================
+     SUPABASE CLIENT
+     ENDE
+     ======================= */
 
-/* =======================
-   DATA + REALTIME
-   BEGIN
-   ======================= */
-async function refreshData() {
-  teams = (await supabaseClient
-    .from("teams")
-    .select("*")
-    .order("created_at", { ascending: true })
-  ).data || [];
+  /* =======================
+     STATE
+     BEGIN
+     ======================= */
+  const songCounts = { 1: 15, 2: 16 };
+  let round = 1;
+  let song = 1;
+  let teams = [];
+  let answersData = [];
+  /* =======================
+     STATE
+     ENDE
+     ======================= */
 
-  answersData = (await supabaseClient
-    .from("answers")
-    .select("*")
-  ).data || [];
+  async function refreshData() {
+    teams = (await supabaseClient
+      .from("teams")
+      .select("*")
+      .order("created_at", { ascending: true })
+    ).data || [];
 
-  render();
-}
+    answersData = (await supabaseClient
+      .from("answers")
+      .select("*")
+    ).data || [];
 
-function subscribeRealtime() {
-  supabaseClient.channel("host-e1")
-    .on("postgres_changes", { event: "*", schema: "public", table: "teams" }, refreshData)
-    .on("postgres_changes", { event: "*", schema: "public", table: "answers" }, refreshData)
-    .subscribe();
-}
-/* =======================
-   DATA + REALTIME
-   ENDE
-   ======================= */
-
-/* =======================
-   UI
-   BEGIN
-   ======================= */
-function setRound(r) {
-  round = r;
-  const sel = document.getElementById("songSelect");
-  sel.innerHTML = "";
-  for (let i = 1; i <= songCounts[r]; i++) {
-    sel.innerHTML += `<option value="${i}">Song ${i}</option>`;
+    render();
   }
-  song = 1;
-  render();
-}
 
-function render() {
-  const container = document.getElementById("answersContainer");
-  container.innerHTML = "";
-  song = Number(document.getElementById("songSelect").value);
+  function render() {
+    const container = document.getElementById("answersContainer");
+    container.innerHTML = "";
 
-  teams.forEach(team => {
-    const block = document.createElement("div");
-    block.className = "team";
-    block.innerHTML = `<div class="team-name">${team.name}</div>`;
+    teams.forEach(team => {
+      const block = document.createElement("div");
+      block.className = "team";
+      block.innerHTML = `<div class="team-name">${team.name}</div>`;
 
-    const ans = answersData.find(a =>
-      a.team_id === team.id &&
-      a.round === round &&
-      a.song === song
-    );
+      const ans = answersData.find(a =>
+        a.team_id === team.id &&
+        a.round === round &&
+        a.song === song
+      );
 
-    if (ans) {
-      block.innerHTML += round === 1
-        ? `<div class="answer">${ans.artist} – ${ans.title}</div>`
-        : `<div class="answer">${ans.movie}</div>`;
-    } else {
-      block.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
+      if (ans) {
+        block.innerHTML +=
+          round === 1
+            ? `<div class="answer">${ans.artist} – ${ans.title}</div>`
+            : `<div class="answer">${ans.movie}</div>`;
+      } else {
+        block.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
+      }
+
+      container.appendChild(block);
+    });
+  }
+
+  function populateSongs() {
+    const select = document.getElementById("songSelect");
+    select.innerHTML = "";
+    for (let i = 1; i <= songCounts[round]; i++) {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `Song ${i}`;
+      select.appendChild(opt);
     }
+    song = 1;
+  }
 
-    container.appendChild(block);
-  });
-}
-/* =======================
-   UI
-   ENDE
-   ======================= */
+  document.getElementById("r1Btn").onclick = () => {
+    round = 1;
+    populateSongs();
+    refreshData();
+  };
 
+  document.getElementById("r2Btn").onclick = () => {
+    round = 2;
+    populateSongs();
+    refreshData();
+  };
+
+  document.getElementById("songSelect").onchange = e => {
+    song = Number(e.target.value);
+    render();
+  };
+
+  populateSongs();
+  refreshData();
+});
 /* =======================
-   START
-   BEGIN
-   ======================= */
-refreshData().then(subscribeRealtime);
-setRound(1);
-/* =======================
-   START
+   APP START
    ENDE
    ======================= */
 </script>
