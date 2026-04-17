@@ -51,6 +51,7 @@
 <div class="section nav">
   <button id="r1" class="active">🎵 Hitster – Klassik</button>
   <button id="r2">🎬 Filmmusik</button>
+  <button id="saveGame" class="secondary">💾 Spielstand speichern & fortfahren</button>
   Song:
   <select id="songSelect"></select>
   <button id="showAnswers" class="secondary">👀 Antworten anzeigen</button>
@@ -228,6 +229,20 @@ showAnswers.onclick=()=>{answersVisible=true;render();};
 showSolution.onclick=showSol;
 showScore.onclick=leaderboard;
 back.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden");};
+
+const saveGame = document.getElementById("saveGame");
+
+saveGame.onclick = async () => {
+  const payload = Object.entries(scores).map(([team_id, score]) => ({
+    team_id: Number(team_id),
+    score,
+    updated_at: new Date().toISOString()
+  }));
+
+  await db.from("team_scores").upsert(payload);
+
+  alert("✅ Spielstand gespeichert – ihr könnt später exakt hier weitermachen.");
+};
 
 /* Start */
 populateSongs();
