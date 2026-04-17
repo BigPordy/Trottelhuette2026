@@ -295,7 +295,7 @@ function openScoreboard(){
   const div=document.createElement("div");
   div.className="row";
   if(i===sorted.length-1) div.classList.add("gold");
-  div.innerHTML=`<span>${i+1}. ${t.name}${i===sorted.length-1?" – 🏆 Dummenpärchen 2026":""}</span>
+  div.innerHTML=`<span>${i+1}. ${t.name}${i===sorted.length-1?" – Dummenpärchen 2026 🏆":""}</span>
                  <span>${scores[t.id]} Punkte</span>`;
   scoreboard.appendChild(div);
  });
