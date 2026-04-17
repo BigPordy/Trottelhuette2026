@@ -1,62 +1,32 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hitster – Host‑Modus</title>
 
-  <!-- ✅ KORREKTER SUPABASE-IMPORT -->
+  <!-- ✅ EINZIG KORREKTER SUPABASE IMPORT -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
-    body{
-      margin:0;padding:1rem;
-      font-family:system-ui,sans-serif;
-      background:#020617;color:white
-    }
+    body{margin:0;padding:1rem;font-family:system-ui,sans-serif;background:#020617;color:white}
     h1{margin:.2rem 0}
     .hint{opacity:.7;margin-bottom:1rem}
 
     .section{background:#1f2937;border-radius:14px;padding:1rem;margin-bottom:1rem}
     .nav{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
 
-    button{
-      padding:.45rem 1.2rem;
-      border-radius:999px;
-      border:none;
-      background:#2563eb;
-      color:white;
-      cursor:pointer
-    }
+    button{padding:.45rem 1.2rem;border-radius:999px;border:none;background:#2563eb;color:white;cursor:pointer}
     button.secondary{background:#475569}
     button.active{background:#16a34a}
     select{padding:.35rem;border-radius:6px}
 
-    .header-row,.team{
-      display:grid;
-      grid-template-columns:360px 1fr;
-      column-gap:2.5rem
-    }
-    .header-row{
-      border-bottom:3px solid #64748b;
-      opacity:.8;
-      padding-bottom:.6rem;
-      margin-bottom:.6rem
-    }
-    .team{
-      padding:.9rem 0;
-      border-top:3px solid #475569
-    }
+    .header-row,.team{display:grid;grid-template-columns:360px 1fr;column-gap:2.5rem}
+    .header-row{border-bottom:3px solid #64748b;opacity:.8;padding-bottom:.6rem;margin-bottom:.6rem}
+    .team{padding:.9rem 0;border-top:3px solid #475569}
     .team:first-child{border-top:none}
 
-    .team-name{
-      font-size:1.4rem;font-weight:700;
-      text-transform:uppercase;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      padding-right:1.5rem;
-      border-right:3px solid #64748b
-    }
-
+    .team-name{font-size:1.4rem;font-weight:700;text-transform:uppercase;padding-right:1.5rem;border-right:3px solid #64748b}
     .answer{padding-left:1.5rem;font-size:1.15rem}
     .answer.hint{opacity:.6;font-style:italic}
 
@@ -64,25 +34,10 @@
     .team.partial{background:#713f12}
     .team.wrong{background:#7f1d1d}
 
-    .solution{
-      font-size:1.7rem;
-      font-weight:800;
-      text-align:center;
-      margin:1rem 0;
-      color:#22c55e;
-    }
+    .solution{font-size:1.7rem;font-weight:800;text-align:center;margin:1rem 0;color:#22c55e}
 
-    .scoreboard .row{
-      display:grid;
-      grid-template-columns:1fr auto;
-      padding:.6rem 1rem;
-      border-bottom:2px solid #334155
-    }
-    .scoreboard .gold{
-      background:linear-gradient(135deg,#8f7a00,#d4af37,#bfa200);
-      color:#1a1a1a;
-      font-weight:800;
-    }
+    .scoreboard .row{display:grid;grid-template-columns:1fr auto;padding:.6rem 1rem;border-bottom:2px solid #334155}
+    .scoreboard .gold{background:linear-gradient(135deg,#8f7a00,#d4af37,#bfa200);color:#1a1a1a;font-weight:800}
 
     .hidden{display:none}
   </style>
@@ -96,21 +51,18 @@
 <div class="section nav">
   <button id="r1" class="active">🎵 Hitster – Klassik</button>
   <button id="r2">🎬 Filmmusik</button>
-
   Song:
   <select id="songSelect"></select>
-
   <button id="showAnswers" class="secondary">👀 Antworten anzeigen</button>
   <button id="showSolution" class="secondary">✅ Richtige Antwort anzeigen</button>
-  <button id="showScoreBtn" class="secondary">🏆 Zwischenstand anzeigen</button>
+  <button id="showScore" class="secondary">🏆 Zwischenstand anzeigen</button>
 </div>
 
 <div id="solutionBox" class="solution hidden"></div>
 
 <div id="roundView" class="section">
   <div class="header-row">
-    <div>TEAM</div>
-    <div>ANTWORT</div>
+    <div>TEAM</div><div>ANTWORT</div>
   </div>
   <div id="answers"></div>
 </div>
@@ -118,352 +70,153 @@
 <div id="scoreView" class="section hidden">
   <h2>🏆 Zwischenstand</h2>
   <div id="scoreboard" class="scoreboard"></div>
-  <button id="backBtn" class="secondary">⬅ Zurück zum Spiel</button>
+  <button id="back" class="secondary">⬅ Zurück zum Spiel</button>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded",()=>{
+document.addEventListener("DOMContentLoaded",async()=>{
 
-  const db = window.supabase.createClient(
-    "https://havaoqxnxnlmyfbldyic.supabase.co",
-    "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
-  );
+/* DOM */
+const r1 = document.getElementById("r1");
+const r2 = document.getElementById("r2");
+const songSelect = document.getElementById("songSelect");
+const showAnswers = document.getElementById("showAnswers");
+const showSolution = document.getElementById("showSolution");
+const showScore = document.getElementById("showScore");
+const back = document.getElementById("back");
+const roundView = document.getElementById("roundView");
+const scoreView = document.getElementById("scoreView");
+const answersEl = document.getElementById("answers");
+const solutionBox = document.getElementById("solutionBox");
+const scoreboard = document.getElementById("scoreboard");
 
-  const r1=document.getElementById("r1");
-  const r2=document.getElementById("r2");
-  const songSelect=document.getElementById("songSelect");
-  const showAnswers=document.getElementById("showAnswers");
-  const showSolution=document.getElementById("showSolution");
-  const showScoreBtn=document.getElementById("showScoreBtn");
-  const backBtn=document.getElementById("backBtn");
-
-  const roundView=document.getElementById("roundView");
-  const scoreView=document.getElementById("scoreView");
-  const answersEl=document.getElementById("answers");
-  const solutionBox=document.getElementById("solutionBox");
-  const scoreboard=document.getElementById("scoreboard");
-
-  const songCounts={1:15,2:16};
-  let round=1;
-  let song=1;
-  let teams=[];
-  let answersData=[];
-  let answersVisible=false;
-  let scores={};
-
-  const norm=s=>(s||"").toLowerCase().normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/[^a-z0-9]/g,"");
-
-  function similarity(a,b){
-    let m=0;
-    for(let i=0;i<Math.min(a.length,b.length);i++)
-      if(a[i]===b[i]) m++;
-    return m/Math.max(a.length,b.length);
-  }
-
-  function classifyR1(c,t){
-    if(c>=.85 && t>=.85) return {cls:"correct",pts:3};
-    if(c>=.6 || t>=.6) return {cls:"partial",pts:1};
-    return {cls:"wrong",pts:0};
-  }
-  function classifyR2(s){
-    if(s>=.8) return {cls:"correct",pts:2};
-    return {cls:"wrong",pts:0};
-  }
-
-  /* === VOLLSTÄNDIGE LÖSUNGEN === */
-  const solutions = {
-    1:{
-      1:{disp:"Ludwig van Beethoven – Für Elise",c:["beethoven"],t:["fur elise","fuer elise"]},
-      2:{disp:"Antonio Vivaldi – Der Frühling",c:["vivaldi"],t:["fruhling","la primavera"]},
-      3:{disp:"Mozart – Hochzeit des Figaro",c:["mozart"],t:["hochzeit des figaro"]},
-      4:{disp:"Giuseppe Verdi – La donna è mobile",c:["verdi"],t:["la donna e mobile"]},
-      5:{disp:"Tschaikowski – Schwanensee",c:["tschaikowski"],t:["schwanensee"]},
-      6:{disp:"Richard Wagner – Ritt der Walküren",c:["wagner"],t:["ritt der walkuren"]},
-      7:{disp:"Beethoven – 5. Symphonie",c:["beethoven"],t:["5 symphonie","schicksalssymphonie"]},
-      8:{disp:"J. S. Bach – Air",c:["bach"],t:["air"]},
-      9:{disp:"Mozart – Eine kleine Nachtmusik",c:["mozart"],t:["eine kleine nachtmusik"]},
-      10:{disp:"Pachelbel – Kanon in D",c:["pachelbel"],t:["kanon"]},
-      11:{disp:"Mozart – Rondo alla Turca",c:["mozart"],t:["rondo alla turca"]},
-      12:{disp:"Carl Orff – O Fortuna",c:["orff"],t:["o fortuna"]},
-      13:{disp:"Bizet – Carmen",c:["bizet"],t:["carmen"]},
-      14:{disp:"Edvard Grieg – Morgenstimmung",c:["grieg"],t:["morgenstimmung"]},
-      15:{disp:"Johann Strauss II – An der schönen blauen Donau",c:["strauss"],t:["an der schonen blauen donau"]}
-    },
-    2:{
-      1:{disp:"Forrest Gump",m:["forrest gump"]},
-      2:{disp:"8 Mile",m:["8 mile","eight mile"]},
-      3:{disp:"Die fabelhafte Welt der Amélie",m:["amelie"]},
-      4:{disp:"Harry Potter – Hedwig’s Theme",m:["harry potter","hedwig"]},
-      5:{disp:"The Godfather",m:["godfather","pate"]},
-      6:{disp:"Fight Club",m:["fight club"]},
-     ```html
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Hitster – Host‑Modus</title>
-
-<!-- ✅ KORREKTER SUPABASE‑IMPORT -->
-<script src="https://unpkg.com/@supabase/supabase-js0;padding:1rem;
-  font-family:system-ui,sans-serif;
-  background:#020617;color:white
-}
-h1{margin:.2rem 0}
-.hint{opacity:.7;margin-bottom:1rem}
-
-.section{background:#1f2937;border-radius:14px;padding:1rem;margin-bottom:1rem}
-.nav{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
-
-button{
-  padding:.45rem 1.2rem;
-  border-radius:999px;
-  border:none;
-  background:#2563eb;
-  color:white;
-  cursor:pointer
-}
-button.secondary{background:#475569}
-button.active{background:#16a34a}
-select{padding:.35rem;border-radius:6px}
-
-.header-row,.team{
-  display:grid;
-  grid-template-columns:360px 1fr;
-  column-gap:2.5rem
-}
-.header-row{
-  border-bottom:3px solid #64748b;
-  opacity:.8;
-  padding-bottom:.6rem;
-  margin-bottom:.6rem
-}
-.team{
-  padding:.9rem 0;
-  border-top:3px solid #475569
-}
-.team:first-child{border-top:none}
-
-.team-name{
-  font-size:1.4rem;
-  font-weight:700;
-  text-transform:uppercase;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  padding-right:1.5rem;
-  border-right:3px solid #64748b
-}
-
-.answer{padding-left:1.5rem;font-size:1.15rem}
-.answer.hint{opacity:.6;font-style:italic}
-
-.team.correct{background:#14532d}
-.team.partial{background:#713f12}
-.team.wrong{background:#7f1d1d}
-
-.solution{
-  font-size:1.7rem;
-  font-weight:800;
-  text-align:center;
-  margin:1rem 0;
-  color:#22c55e;
-}
-
-.scoreboard .row{
-  display:grid;
-  grid-template-columns:1fr auto;
-  padding:.6rem 1rem;
-  border-bottom:2px solid #334155
-}
-.scoreboard .gold{
-  background:linear-gradient(135deg,#8f7a00,#d4af37,#bfa200);
-  color:#1a1a1a;
-  font-weight:800;
-}
-
-.hidden{display:none}
-</style>
-</head>
-
-<body>
-
-<h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">Antworten → Lösung → Bewertung → Zwischenstand</div>
-
-<div class="section nav">
-  <button id="r1" class="active">🎵 Hitster – Klassik</button>
-  <button id="r2">🎬 Filmmusik</button>
-
-  Song:
-  <select id="songSelect"></select>
-
-  <button id="showAnswers" class="secondary">👀 Antworten anzeigen</button>
-  <button id="showSolution" class="secondary">✅ Richtige Antwort anzeigen</button>
-  <button id="showScoreBtn" class="secondary">🏆 Zwischenstand anzeigen</button>
-</div>
-
-<div id="solutionBox" class="solution hidden"></div>
-
-<div id="roundView" class="section">
-  <div class="header-row">
-    <div>TEAM</div>
-    <div>ANTWORT</div>
-  </div>
-  <div id="answers"></div>
-</div>
-
-<div id="scoreView" class="section hidden">
-  <h2>🏆 Zwischenstand</h2>
-  <div id="scoreboard" class="scoreboard"></div>
-  <button id="backBtn" class="secondary">⬅ Zurück zum Spiel</button>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded",()=>{
-
+/* Supabase */
 const db = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 
-const r1=document.getElementById("r1");
-const r2=document.getElementById("r2");
-const songSelect=document.getElementById("songSelect");
-const showAnswers=document.getElementById("showAnswers");
-const showSolution=document.getElementById("showSolution");
-const showScoreBtn=document.getElementById("showScoreBtn");
-const backBtn=document.getElementById("backBtn");
-
-const roundView=document.getElementById("roundView");
-const scoreView=document.getElementById("scoreView");
-const answersEl=document.getElementById("answers");
-const solutionBox=document.getElementById("solutionBox");
-const scoreboard=document.getElementById("scoreboard");
-
+/* State */
 const songCounts={1:15,2:16};
-let round=1;
-let song=1;
-
-let teams=[];
-let answersData=[];
+let round=1, song=1;
+let teams=[], answers=[], scores={};
 let answersVisible=false;
-let scores={};
 
-const norm=s=>(s||"")
- .toLowerCase().normalize("NFD")
- .replace(/[\u0300-\u036f]/g,"")
- .replace(/[^a-z0-9]/g,"");
+/* Utils */
+const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+const sim=(a,b)=>{let m=0;for(let i=0;i<Math.min(a.length,b.length);i++)if(a[i]===b[i])m++;return m/Math.max(a.length,b.length);};
+const clsR1=(c,t)=>c>=.85&&t>=.85?["correct",3]:c>=.6||t>=.6?["partial",1]:["wrong",0];
+const clsR2=s=>s>=.8?["correct",2]:["wrong",0];
 
-function similarity(a,b){
- let m=0;
- for(let i=0;i<Math.min(a.length,b.length);i++)
-  if(a[i]===b[i]) m++;
- return m/Math.max(a.length,b.length);
-}
-function classifyR1(c,t){
- if(c>=.85 && t>=.85) return{cls:"correct",pts:3};
- if(c>=.6 || t>=.6) return{cls:"partial",pts:1};
- return{cls:"wrong",pts:0};
-}
-function classifyR2(s){
- if(s>=.8) return{cls:"correct",pts:2};
- return{cls:"wrong",pts:0};
-}
+/* Lösungen */
+const solutions = {
+  1:{
+    1:{disp:"Ludwig van Beethoven – Für Elise",c:["beethoven"],t:["fur elise","fuer elise"]},
+    2:{disp:"Antonio Vivaldi – Der Frühling",c:["vivaldi"],t:["fruhling","la primavera"]},
+    3:{disp:"Mozart – Hochzeit des Figaro",c:["mozart"],t:["hochzeit des figaro"]},
+    4:{disp:"Giuseppe Verdi – La donna è mobile",c:["verdi"],t:["la donna e mobile"]},
+    5:{disp:"Tschaikowski – Schwanensee",c:["tschaikowski"],t:["schwanensee"]},
+    6:{disp:"Richard Wagner – Ritt der Walküren",c:["wagner"],t:["ritt der walkuren"]},
+    7:{disp:"Beethoven – 5. Symphonie",c:["beethoven"],t:["5 symphonie","schicksalssymphonie"]},
+    8:{disp:"J. S. Bach – Air",c:["bach"],t:["air"]},
+    9:{disp:"Mozart – Eine kleine Nachtmusik",c:["mozart"],t:["eine kleine nachtmusik"]},
+    10:{disp:"Pachelbel – Kanon in D",c:["pachelbel"],t:["kanon"]},
+    11:{disp:"Mozart – Rondo alla Turca",c:["mozart"],t:["rondo alla turca"]},
+    12:{disp:"Carl Orff – O Fortuna",c:["orff"],t:["o fortuna"]},
+    13:{disp:"Bizet – Carmen",c:["bizet"],t:["carmen"]},
+    14:{disp:"Edvard Grieg – Morgenstimmung",c:["grieg"],t:["morgenstimmung"]},
+    15:{disp:"Johann Strauss II – An der schönen blauen Donau",c:["strauss"],t:["an der schonen blauen donau"]}
+  },
+  2:{
+    1:{disp:"Forrest Gump",m:["forrest gump"]},
+    2:{disp:"8 Mile",m:["8 mile","eight mile"]},
+    3:{disp:"Die fabelhafte Welt der Amélie",m:["amelie"]},
+    4:{disp:"Harry Potter – Hedwig’s Theme",m:["harry potter","hedwig"]},
+    5:{disp:"The Godfather",m:["godfather","pate"]},
+    6:{disp:"Fight Club",m:["fight club"]},
+    7:{disp:"Ziemlich beste Freunde",m:["ziemlich beste freunde"]},
+    8:{disp:"Interstellar",m:["interstellar"]},
+    9:{disp:"Schindlers Liste",m:["schindlers liste"]},
+    10:{disp:"Inception",m:["inception"]},
+    11:{disp:"The Office",m:["the office"]},
+    12:{disp:"Requiem for a Dream",m:["requiem for a dream"]},
+    13:{disp:"Chariots of Fire",m:["chariots","stunde des siegers"]},
+    14:{disp:"Batman Begins",m:["batman begins"]},
+    15:{disp:"Barbie",m:["barbie"]},
+    16:{disp:"Sherlock Holmes",m:["sherlock holmes"]}
+  }
+};
 
-/* === KOMPLETTE LÖSUNGEN (R1 15 / R2 16) === */
-const solutions={/* unverändert wie zuvor – komplett */};
+/* Load */
+teams=(await db.from("teams").select("*").order("created_at")).data||[];
+answers=(await db.from("answers").select("*")).data||[];
+teams.forEach(t=>scores[t.id]=0);
 
-async function load(){
- teams=(await db.from("teams").select("*").order("created_at")).data||[];
- answersData=(await db.from("answers").select("*")).data||[];
- teams.forEach(t=>scores[t.id]=scores[t.id]||0);
- render();
-}
-
+/* UI */
 function populateSongs(){
- songSelect.innerHTML="";
- for(let i=1;i<=songCounts[round];i++)
-  songSelect.innerHTML+=`<option value="${i}">Song ${i}</option>`;
- song=1;
+  songSelect.innerHTML="";
+  for(let i=1;i<=songCounts[round];i++) songSelect.innerHTML+=`<option value="${i}">Song ${i}</option>`;
+  song=1;
 }
-
 function render(){
- answersEl.innerHTML="";
- teams.forEach(team=>{
-  const row=document.createElement("div");
-  row.className="team";
-  row.id=`team-${team.id}`;
-  row.innerHTML=`<div class="team-name">${team.name}</div>`;
-
-  const a=answersData.find(x=>x.team_id===team.id && x.round===round && x.song===song);
-
-  if(!answersVisible){
-    row.innerHTML+=`<div class="answer hint"></div>`;
-  } else if(!a){
-    row.innerHTML+=`<div class="answer hint">Keine Antwort</div>`;
-  } else {
-    row.innerHTML+= round===1
-      ? `<div class="answer">${a.artist} – ${a.title}</div>`
-      : `<div class="answer">${a.movie}</div>`;
-  }
-  answersEl.appendChild(row);
- });
+  answersEl.innerHTML="";
+  teams.forEach(t=>{
+    const row=document.createElement("div");
+    row.id=`team-${t.id}`;
+    row.className="team";
+    row.innerHTML=`<div class="team-name">${t.name}</div>`;
+    const a=answers.find(x=>x.team_id===t.id&&x.round===round&&x.song===song);
+    if(!answersVisible) row.innerHTML+=`<div class="answer hint"></div>`;
+    else if(!a) row.innerHTML+=`<div class="answer hint">Keine Antwort</div>`;
+    else row.innerHTML+=`<div class="answer">${round===1?`${a.artist} – ${a.title}`:a.movie}</div>`;
+    answersEl.appendChild(row);
+  });
+}
+function showSol(){
+  solutionBox.textContent=solutions[round][song].disp;
+  solutionBox.classList.remove("hidden");
+  teams.forEach(t=>{
+    const a=answers.find(x=>x.team_id===t.id&&x.round===round&&x.song===song);
+    if(!a) return;
+    let r;
+    if(round===1){
+      const s=solutions[1][song];
+      r=clsR1(
+        Math.max(...s.c.map(v=>sim(norm(a.artist),norm(v)))),
+        Math.max(...s.t.map(v=>sim(norm(a.title),norm(v))))
+      );
+    } else {
+      const s=solutions[2][song];
+      r=clsR2(Math.max(...s.m.map(v=>sim(norm(a.movie),norm(v)))));
+    }
+    scores[t.id]+=r[1];
+    document.getElementById(`team-${t.id}`).classList.add(r[0]);
+  });
+}
+function leaderboard(){
+  roundView.classList.add("hidden");
+  scoreView.classList.remove("hidden");
+  scoreboard.innerHTML="";
+  [...teams].sort((a,b)=>scores[b.id]-scores[a.id]).forEach((t,i,arr)=>{
+    const div=document.createElement("div");
+    div.className="row"+(i===arr.length-1?" gold":"");
+    div.innerHTML=`<span>${i+1}. ${t.name}</span><span>${i===arr.length-1?"Dummenpärchen 2026 🏆 ":""}${scores[t.id]} Punkte</span>`;
+    scoreboard.appendChild(div);
+  });
 }
 
-function showSolutionNow(){
- solutionBox.textContent=solutions[round][song].disp;
- solutionBox.classList.remove("hidden");
-
- teams.forEach(team=>{
-  const a=answersData.find(x=>x.team_id===team.id && x.round===round && x.song===song);
-  if(!a) return;
-
-  let res;
-  if(round===1){
-    const sol=solutions[round][song];
-    const c=Math.max(...sol.c.map(s=>similarity(norm(a.artist),norm(s))));
-    const t=Math.max(...sol.t.map(s=>similarity(norm(a.title),norm(s))));
-    res=classifyR1(c,t);
-  }else{
-    const sol=solutions[round][song];
-    const sc=Math.max(...sol.m.map(s=>similarity(norm(a.movie),norm(s))));
-    res=classifyR2(sc);
-  }
-  scores[team.id]+=res.pts;
-  document.getElementById(`team-${team.id}`).classList.add(res.cls);
- });
-}
-
-function openScoreboard(){
- roundView.classList.add("hidden");
- scoreView.classList.remove("hidden");
- scoreboard.innerHTML="";
- const sorted=[...teams].sort((a,b)=>scores[b.id]-scores[a.id]);
- sorted.forEach((t,i)=>{
-  const right = i===sorted.length-1
-    ? `Dummenpärchen&nbsp;2026 🏆 &nbsp;${scores[t.id]} Punkte`
-    : `${scores[t.id]} Punkte`;
-  const div=document.createElement("div");
-  div.className="row"+(i===sorted.length-1?" gold":"");
-  div.innerHTML=`<span>${i+1}. ${t.name}</span><span>${right}</span>`;
-  scoreboard.appendChild(div);
- });
-}
-
-/* === EVENTS === */
-r1.onclick=()=>{round=1;answersVisible=false;solutionBox.classList.add("hidden");r1.classList.add("active");r2.classList.remove("active");populateSongs();render();};
-r2.onclick=()=>{round=2;answersVisible=false;solutionBox.classList.add("hidden");r2.classList.add("active");r1.classList.remove("active");populateSongs();render();};
+/* Events */
+r1.onclick=()=>{round=1;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");r1.classList.add("active");r2.classList.remove("active");render();};
+r2.onclick=()=>{round=2;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");r2.classList.add("active");r1.classList.remove("active");render();};
 songSelect.onchange=()=>{song=Number(songSelect.value);answersVisible=false;solutionBox.classList.add("hidden");render();};
 showAnswers.onclick=()=>{answersVisible=true;render();};
-showSolution.onclick=showSolutionNow;
-showScoreBtn.onclick=openScoreboard;
-backBtn.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden");};
+showSolution.onclick=showSol;
+showScore.onclick=leaderboard;
+back.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden");};
 
+/* Start */
 populateSongs();
-load();
+render();
 
 });
 </script>
