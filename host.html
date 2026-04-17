@@ -104,6 +104,7 @@ const songCounts={1:15,2:16};
 let round=1, song=1;
 let teams=[], answers=[], scores={};
 let answersVisible=false;
+let evaluatedSongs = {};
 
 /* Utils */
 const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
@@ -274,6 +275,7 @@ back.onclick=()=>{
   scoreView.classList.add("hidden"); 
   roundView.classList.remove("hidden"); 
   solutionBox.classList.add("hidden");
+};
 resetScores.onclick = async () => {
   if (!confirm("Wirklich ALLE Punktestände zurücksetzen?")) return;
 
