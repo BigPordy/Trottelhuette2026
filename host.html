@@ -148,9 +148,23 @@ const solutions = {
 };
 
 /* Load */
-teams=(await db.from("teams").select("*").order("created_at")).data||[];
-answers=(await db.from("answers").select("*")).data||[];
-teams.forEach(t=>scores[t.id]=0);
+teams = (await db.from("teams").select("*").order("created_at")).data || [];
+answers = (await db.from("answers").select("*")).data || [];
+
+/* Scores aus DB laden */
+const scoreRes = await db.from("team_scores").select("*");
+const scoreMap = {};
+
+/* team_id -> score mappen */
+(scoreRes.data || []).forEach(r => {
+  scoreMap[r.team_id] = r.score;
+});
+
+/* Lokale Scores setzen */
+teams.forEach(t => {
+  scores[t.id] = scoreMap[t.id] ?? 0;
+});
+``
 
 /* UI */
 function populateSongs(){
