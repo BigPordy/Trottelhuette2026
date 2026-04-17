@@ -1,159 +1,122 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hitster – Host‑Modus</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hitster – Host‑Modus</title>
 
-  <!-- =======================
-       SUPABASE SCRIPT
-       BEGIN
-       ======================= -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <!-- =======================
-       SUPABASE SCRIPT
-       ENDE
-       ======================= -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
-  <style>
-    body {
-      margin: 0;
-      padding: 1rem;
-      font-family: system-ui, sans-serif;
-      background: #020617;
-      color: white;
-    }
+<style>
+body{
+  margin:0;padding:1rem;
+  font-family:system-ui,sans-serif;
+  background:#020617;color:white;
+}
 
-    h1 { margin-bottom: 0.25rem; }
-    .hint { opacity: 0.7; margin-bottom: 1rem; }
+h1{margin-bottom:.2rem}
+.hint{opacity:.7;margin-bottom:1rem}
 
-    .section {
-      background: #1f2937;
-      border-radius: 14px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
+.section{
+  background:#1f2937;
+  border-radius:14px;
+  padding:1rem;
+  margin-bottom:1rem;
+}
 
-    .nav {
-      display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
+.nav{
+  display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;
+}
 
-    button {
-      padding: 0.45rem 1.2rem;
-      border-radius: 999px;
-      border: none;
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-      font-size: 0.95rem;
-    }
+button{
+  padding:.45rem 1.2rem;
+  border-radius:999px;
+  border:none;
+  background:#2563eb;
+  color:white;
+  cursor:pointer;
+  font-size:.95rem;
+}
 
-    button.secondary { background: #475569; }
+button.secondary{background:#475569}
+select{padding:.35rem;border-radius:6px}
 
-    select {
-      padding: 0.35rem;
-      border-radius: 6px;
-      border: none;
-      font-size: 0.95rem;
-    }
+.header-row{
+  display:grid;
+  grid-template-columns:360px 1fr;
+  column-gap:2.5rem;
+  padding-bottom:.6rem;
+  margin-bottom:.6rem;
+  border-bottom:3px solid #64748b;
+  font-size:.9rem;
+  letter-spacing:.08em;
+  opacity:.8;
+}
 
-    /* =======================
-       HEADER ROW
-       BEGIN
-       ======================= */
-    .header-row {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      column-gap: 2.5rem;
-      padding-bottom: 0.6rem;
-      margin-bottom: 0.6rem;
-      border-bottom: 3px solid #64748b;
-      font-size: 0.9rem;
-      letter-spacing: 0.08em;
-      opacity: 0.8;
-    }
-    /* =======================
-       HEADER ROW
-       ENDE
-       ======================= */
+.team{
+  display:grid;
+  grid-template-columns:360px 1fr;
+  column-gap:2.5rem;
+  align-items:center;
+  padding:.9rem 0;
+  border-top:3px solid #475569;
+}
 
-    /* =======================
-       TEAM / ANSWER LAYOUT
-       BEGIN
-       ======================= */
-    .team {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      column-gap: 2.5rem;
-      align-items: center;
-      border-top: 3px solid #475569;   /* dickere horizontale Linie */
-      padding: 0.9rem 0;
-    }
+.team:first-child{
+  border-top:none; /* ✅ doppelte Linie entfernt */
+}
 
-    .team-name {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      padding-right: 1.5rem;
-      border-right: 3px solid #64748b; /* vertikale Trennlinie */
-    }
+.team-name{
+  font-size:1.5rem;
+  font-weight:700;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  padding-right:1.5rem;
+  border-right:3px solid #64748b;
+}
 
-    .answer {
-      padding-left: 1.5rem;
-      font-size: 1.2rem;
-    }
+.answer{
+  padding-left:1.5rem;
+  font-size:1.2rem;
+  line-height:1.4;
+}
 
-    .answer.correct { color: #22c55e; font-weight: 700; }
-    .answer.partial { color: #eab308; font-weight: 700; }
-    .answer.wrong   { color: #ef4444; font-weight: 700; }
-    .answer.hint    { opacity: 0.6; font-style: italic; }
+.answer.hint{
+  opacity:.6;
+  font-style:italic;
+}
 
-    .solution {
-      font-size: 1.7rem;
-      font-weight: 800;
-      text-align: center;
-      margin: 1rem 0;
-      color: #22c55e;
-    }
-    /* =======================
-       TEAM / ANSWER LAYOUT
-       ENDE
-       ======================= */
-  </style>
+.answer.correct{color:#22c55e;font-weight:700}
+.answer.partial{color:#eab308;font-weight:700}
+.answer.wrong{color:#ef4444;font-weight:700}
+
+.solution{
+  font-size:1.7rem;
+  font-weight:800;
+  text-align:center;
+  margin:1rem 0;
+  color:#22c55e;
+}
+</style>
 </head>
 
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">Runde 1: Hitster – Klassik · Runde 2: Filmmusik</div>
+<div class="hint">Runde 1: Hitster – Klassik · Runde 2: Filmmusik</div>
 
-<!-- =======================
-     NAVIGATION
-     BEGIN
-     ======================= -->
 <div class="section">
   <div class="nav">
     <button id="round1Btn">🎵 Hitster – Klassik</button>
     <button id="round2Btn">🎬 Filmmusik</button>
-
     Song:
     <select id="songSelect"></select>
-
     <button id="solutionBtn" class="secondary">✅ Lösung anzeigen</button>
   </div>
 </div>
-<!-- =======================
-     NAVIGATION
-     ENDE
-     ======================= -->
 
 <div id="solutionBox" class="solution" style="display:none;"></div>
 
@@ -166,139 +129,110 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded",()=>{
 
-  const supabaseClient = window.supabase.createClient(
-    "https://havaoqxnxnlmyfbldyic.supabase.co",
-    "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
-  );
+const supabaseClient=window.supabase.createClient(
+  "https://havaoqxnxnlmyfbldyic.supabase.co",
+  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+);
 
-  const songCounts = { 1: 15, 2: 16 };
-  let round = 1;
-  let song = 1;
-  let teams = [];
-  let answers = [];
-  let solutionVisible = false;
+const songCounts={1:15,2:16};
+let round=1,song=1,teams=[],answers=[],solutionVisible=false;
 
-  const normalize = s =>
-    (s || "")
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "");
+const normalize=s=>(s||"")
+ .toLowerCase()
+ .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+ .replace(/[^a-z0-9]/g,"");
 
-  function similarity(a, b) {
-    if (!a || !b) return 0;
-    let m = 0;
-    for (let i = 0; i < Math.min(a.length, b.length); i++) {
-      if (a[i] === b[i]) m++;
-    }
-    return m / Math.max(a.length, b.length);
+function similarity(a,b){
+ if(!a||!b) return 0;
+ let m=0;
+ for(let i=0;i<Math.min(a.length,b.length);i++)
+   if(a[i]===b[i]) m++;
+ return m/Math.max(a.length,b.length);
+}
+
+function classify(s){
+ if(s>=.85) return"correct";
+ if(s>=.6) return"partial";
+ return"wrong";
+}
+
+const solutions={
+  2:{
+   1:["forrest gump"],2:["8 mile","eight mile"],
+   3:["amelie","fabelhafte welt der amelie"],
+   4:["harry potter","hedwigs theme"],
+   5:["godfather","pate"],6:["fight club"],
+   7:["ziemlich beste freunde"],
+   8:["interstellar"],9:["schindlers liste"],
+   10:["inception"],11:["the office"],
+   12:["requiem for a dream"],
+   13:["chariots of fire","stunde des siegers"],
+   14:["batman begins"],15:["barbie"],
+   16:["sherlock holmes"]
   }
+};
 
-  function classify(score) {
-    if (score >= 0.85) return "correct";
-    if (score >= 0.6)  return "partial";
-    return "wrong";
+async function refreshData(){
+ teams=(await supabaseClient.from("teams").select("*").order("created_at")).data||[];
+ answers=(await supabaseClient.from("answers").select("*")).data||[];
+ render();
+}
+
+function populateSongs(){
+ const sel=songSelect=document.getElementById("songSelect");
+ sel.innerHTML="";
+ for(let i=1;i<=songCounts[round];i++)
+   sel.innerHTML+=`<option value="${i}">Song ${i}</option>`;
+ song=1;
+}
+
+function render(){
+ const c=document.getElementById("answersContainer");
+ c.innerHTML="";
+ teams.forEach(team=>{
+  const row=document.createElement("div");
+  row.className="team";
+  row.innerHTML=`<div class="team-name">${team.name}</div>`;
+  const ans=answers.find(a=>a.team_id===team.id&&a.round===round&&a.song===song);
+
+  if(!ans){
+    row.innerHTML+=`<div class="answer hint">Keine Antwort</div>`;
+  }else if(!solutionVisible){
+    row.innerHTML+=`<div class="answer">${ans.movie||""}</div>`;
+  }else{
+    const solList=solutions[round]?.[song]||[];
+    const score=Math.max(...solList.map(s=>similarity(normalize(ans.movie),normalize(s))));
+    row.innerHTML+=`<div class="answer ${classify(score)}">${ans.movie}</div>`;
   }
+  c.appendChild(row);
+ });
+}
 
-  /* =======================
-     LÖSUNGEN RUNDE 2
-     BEGIN
-     ======================= */
-  const solutions = {
-    2: {
-      1: ["forrest gump"],
-      2: ["8 mile","eight mile"],
-      3: ["amelie","fabelhafte welt der amelie"],
-      4: ["harry potter","hedwigs theme"],
-      5: ["godfather","pate"],
-      6: ["fight club"],
-      7: ["ziemlich beste freunde"],
-      8: ["interstellar"],
-      9: ["schindlers liste"],
-      10: ["inception"],
-      11: ["the office"],
-      12: ["requiem for a dream"],
-      13: ["chariots of fire","stunde des siegers"],
-      14: ["batman begins"],
-      15: ["barbie"],
-      16: ["sherlock holmes"]
-    }
-  };
-  /* =======================
-     LÖSUNGEN RUNDE 2
-     ENDE
-     ======================= */
+/* ✅ Runde wechseln */
+round1Btn.onclick=()=>{round=1;solutionVisible=false;solutionBox.style.display="none";populateSongs();render();}
+round2Btn.onclick=()=>{round=2;solutionVisible=false;solutionBox.style.display="none";populateSongs();render();}
 
-  async function refreshData() {
-    teams = (await supabaseClient.from("teams").select("*").order("created_at")).data || [];
-    answers = (await supabaseClient.from("answers").select("*")).data || [];
-    render();
-  }
+/* ✅ Lösung anzeigen */
+solutionBtn.onclick=()=>{
+ solutionVisible=true;
+ solutionBox.textContent="Lösung angezeigt";
+ solutionBox.style.display="block";
+ render();
+}
 
-  function populateSongs() {
-    const sel = document.getElementById("songSelect");
-    sel.innerHTML = "";
-    for (let i = 1; i <= songCounts[round]; i++) {
-      sel.innerHTML += `<option value="${i}">Song ${i}</option>`;
-    }
-    song = 1;
-  }
+songSelect.onchange=e=>{
+ song=Number(e.target.value);
+ solutionVisible=false;
+ solutionBox.style.display="none";
+ render();
+}
 
-  function render() {
-    const container = document.getElementById("answersContainer");
-    container.innerHTML = "";
-
-    teams.forEach(team => {
-      const row = document.createElement("div");
-      row.className = "team";
-      row.innerHTML = `<div class="team-name">${team.name}</div>`;
-
-      const ans = answers.find(a =>
-        a.team_id === team.id && a.round === round && a.song === song
-      );
-
-      if (!ans) {
-        row.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
-      } else if (!solutionVisible) {
-        row.innerHTML += `<div class="answer">${ans.movie || ""}</div>`;
-      } else {
-        const solList = solutions[round]?.[song] || [];
-        const score = Math.max(...solList.map(s => similarity(normalize(ans.movie), normalize(s))));
-        const cls = classify(score);
-        row.innerHTML += `<div class="answer ${cls}">${ans.movie}</div>`;
-      }
-
-      container.appendChild(row);
-    });
-  }
-
-  document.getElementById("round2Btn").onclick = () => {
-    round = 2;
-    solutionVisible = false;
-    document.getElementById("solutionBox").style.display = "none";
-    populateSongs();
-    render();
-  };
-
-  document.getElementById("songSelect").onchange = e => {
-    song = Number(e.target.value);
-    solutionVisible = false;
-    document.getElementById("solutionBox").style.display = "none";
-    render();
-  };
-
-  document.getElementById("solutionBtn").onclick = () => {
-    document.getElementById("solutionBox").style.display = "none";
-    solutionVisible = true;
-    render();
-  };
-
-  populateSongs();
-  refreshData();
+populateSongs();
+refreshData();
 });
 </script>
 
 </body>
 </html>
-``
