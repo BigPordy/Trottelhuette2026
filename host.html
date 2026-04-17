@@ -5,8 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hitster – Host‑Modus</title>
 
-  <!-- ✅ SUPABASE CLIENT (KORREKT) -->
+  <!-- =======================
+       SUPABASE CLIENT
+       BEGIN
+       ======================= -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- =======================
+       SUPABASE CLIENT
+       ENDE
+       ======================= -->
 
   <style>
     body {
@@ -31,6 +38,7 @@
       gap: 0.5rem;
       margin-bottom: 0.75rem;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     button {
@@ -41,6 +49,10 @@
       color: white;
       cursor: pointer;
       font-size: 0.9rem;
+    }
+
+    button.secondary {
+      background: #475569;
     }
 
     select {
@@ -59,25 +71,37 @@
     .hint   { font-size: 0.8rem; opacity: 0.75; margin-left: 0.5rem; }
     .score  { font-weight: bold; }
     .checkbox { margin-right: 0.3rem; }
+    .locked .checkbox { pointer-events: none; opacity: 0.4; }
   </style>
 </head>
 
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">🟢 Live‑Verbindung aktiv</div>
+<div class="hint" id="lockStatus">🟢 Bewertung aktiv</div>
 
 <div class="section">
   <h2>Navigation</h2>
   <div class="nav">
     <button onclick="setRound(1)">🎵 Runde 1</button>
     <button onclick="setRound(2)">🎬 Runde 2</button>
+
     Song:
     <select id="songSelect" onchange="render()"></select>
+
+    <!-- =======================
+         D1 – LOCK / UNLOCK
+         BEGIN
+         ======================= -->
+    <button id="lockBtn" class="secondary" onclick="toggleLock()">🔒 Bewertung sperren</button>
+    <!-- =======================
+         D1 – LOCK / UNLOCK
+         ENDE
+         ======================= -->
   </div>
 </div>
 
-<div class="section">
+<div class="section" id="answersSection">
   <h2>Antworten</h2>
   <div id="answers"></div>
 </div>
@@ -88,18 +112,39 @@
 </div>
 
 <script>
-/* ================= SUPABASE ================= */
+/* =======================
+   SUPABASE INIT
+   BEGIN
+   ======================= */
 const supabase = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
+/* =======================
+   SUPABASE INIT
+   ENDE
+   ======================= */
 
-/* ================= KONFIG ================= */
+/* =======================
+   GRUNDSTATE
+   BEGIN
+   ======================= */
 const songCounts = { 1: 15, 2: 16 };
-let round = 1, song = 1;
-let teams = [], answers = [], scores = {};
+let round = 1;
+let song = 1;
+let teams = [];
+let answers = [];
+let scores = {};
+let isLocked = false;   // ✅ D1 Lock-State
+/* =======================
+   GRUNDSTATE
+   ENDE
+   ======================= */
 
-/* ================= PHASE C – TEXT ================= */
+/* =======================
+   PHASE C – TEXT LOGIK
+   BEGIN
+   ======================= */
 function normalizeText(str) {
   return (str || "")
     .toLowerCase()
@@ -109,31 +154,32 @@ function normalizeText(str) {
     .trim();
 }
 
-function similarity(a,b){
+function similarity(a,b) {
   if(!a||!b) return 0;
   let m=0;
   for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i]===b[i]) m++;
   return m/Math.max(a.length,b.length);
 }
 
-function similarityLabel(s){
-  if(s>=0.85) return "✅ wahrscheinlich richtig";
-  if(s>=0.70) return "❓ Grenzfall";
+function similarityLabel(s) {
+  if (s >= 0.85) return "✅ wahrscheinlich richtig";
+  if (s >= 0.70) return "❓ Grenzfall";
   return "❌ eher falsch";
 }
 
-/* ================= LÖSUNGEN ================= */
-const correctSolutions={
-  1:{
-    1:{artist:"beethoven",title:"fuer elise"},
-    2:{artist:"vivaldi",title:"fruehling"}
-  },
-  2:{
-    1:"forrest gump",2:"8 mile",3:"amelie",4:"harry potter"
-  }
+const correctSolutions = {
+  1:{ 1:{artist:"beethoven",title:"fuer elise"}, 2:{artist:"vivaldi",title:"fruehling"} },
+  2:{ 1:"forrest gump",2:"8 mile",3:"amelie",4:"harry potter" }
 };
+/* =======================
+   PHASE C – TEXT LOGIK
+   ENDE
+   ======================= */
 
-/* ================= DATA + REALTIME ================= */
+/* =======================
+   DATA + REALTIME
+   BEGIN
+   ======================= */
 async function refreshData(){
   teams=(await supabase.from("teams").select()).data||[];
   answers=(await supabase.from("answers").select()).data||[];
@@ -146,42 +192,100 @@ function subscribeRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"answers"},refreshData)
     .subscribe();
 }
+/* =======================
+   DATA + REALTIME
+   ENDE
+   ======================= */
 
-/* ================= UI ================= */
+/* =======================
+   D1 – LOCK LOGIK
+   BEGIN
+   ======================= */
+function toggleLock() {
+  isLocked = !isLocked;
+  const sec = document.getElementById("answersSection");
+  const status = document.getElementById("lockStatus");
+  const btn = document.getElementById("lockBtn");
+
+  if (isLocked) {
+    sec.classList.add("locked");
+    status.textContent = "🔒 Bewertung gesperrt";
+    btn.textContent = "🔓 Bewertung freigeben";
+  } else {
+    sec.classList.remove("locked");
+    status.textContent = "🟢 Bewertung aktiv";
+    btn.textContent = "🔒 Bewertung sperren";
+  }
+}
+/* =======================
+   D1 – LOCK LOGIK
+   ENDE
+   ======================= */
+
+/* =======================
+   UI
+   BEGIN
+   ======================= */
 function setRound(r){
   round=r;
   songSelect.innerHTML="";
-  for(let i=1;i<=songCounts[r];i++)
-    songSelect.innerHTML+=`<option>${i}</option>`;
-  song=1; render();
+  for(let i=1;i<=songCounts[r];i++){
+    songSelect.innerHTML+=`<option value="${i}">Song ${i}</option>`;
+  }
+  song=1;
+  render();
 }
 
 function render(){
   song=Number(songSelect.value);
-  answersDiv.innerHTML=""; scores={};
+  answers.innerHTML="";
+  scores={};
 
   teams.forEach(t=>{
     scores[t.id]=0;
-    const ans=answers.find(a=>a.team_id===t.id&&a.round===round&&a.song===song);
+    const ans=answersData=answers.find(a=>a.team_id===t.id&&a.round===round&&a.song===song);
     const d=document.createElement("div");
-    d.className="team"; d.innerHTML=`<h3>${t.name}</h3>`;
-    if(!ans){d.innerHTML+=`<div class="answer">Keine Antwort</div>`;answersDiv.appendChild(d);return;}
+    d.className="team";
+    d.innerHTML=`<h3>${t.name}</h3>`;
+
+    if(!ans){
+      d.innerHTML+=`<div class="answer">Keine Antwort</div>`;
+      answers.appendChild(d);
+      return;
+    }
 
     if(round===1){
       const c=correctSolutions[1][song]||{};
       const sa=similarity(normalizeText(ans.artist),c.artist);
       const st=similarity(normalizeText(ans.title),c.title);
       d.innerHTML+=`
-        <div class="answer">${ans.artist} – ${ans.title}
-        <div class="hint">${similarityLabel(sa)} (Interpret)</div>
-        <div class="hint">${similarityLabel(st)} (Titel)</div></div>`;
+        <div class="answer">
+          ${ans.artist} – ${ans.title}
+          <div class="hint">${similarityLabel(sa)} (Interpret)</div>
+          <div class="hint">${similarityLabel(st)} (Titel)</div>
+        </div>
+        <label><input class="checkbox" type="checkbox" onclick="updateScore('${t.id}',1)"> Interpret</label>
+        <label><input class="checkbox" type="checkbox" onclick="updateScore('${t.id}',1)"> Titel</label>
+        <label><input class="checkbox" type="checkbox" onclick="updateScore('${t.id}',1)"> Bonus</label>
+      `;
     } else {
       const sc=similarity(normalizeText(ans.movie),correctSolutions[2][song]);
-      d.innerHTML+=`<div class="answer">${ans.movie}
-        <div class="hint">${similarityLabel(sc)}</div></div>`;
+      d.innerHTML+=`
+        <div class="answer">
+          ${ans.movie}
+          <div class="hint">${similarityLabel(sc)}</div>
+        </div>
+        <label><input class="checkbox" type="checkbox" onclick="updateScore('${t.id}',2)"> richtig</label>
+      `;
     }
-    answersDiv.appendChild(d);
+    answers.appendChild(d);
   });
+
+  renderLeaderboard();
+}
+
+function updateScore(id,val){
+  scores[id]+=val;
   renderLeaderboard();
 }
 
@@ -191,10 +295,21 @@ function renderLeaderboard(){
     .sort((a,b)=>b.score-a.score)
     .forEach(t=>leaderboard.innerHTML+=`<div class="score">${t.name}: ${t.score}</div>`);
 }
+/* =======================
+   UI
+   ENDE
+   ======================= */
 
-/* ================= START ================= */
+/* =======================
+   START
+   BEGIN
+   ======================= */
 refreshData().then(subscribeRealtime);
 setRound(1);
+/* =======================
+   START
+   ENDE
+   ======================= */
 </script>
 
 </body>
