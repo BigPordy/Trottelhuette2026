@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hitster – Host‑Modus</title>
 
-<!-- ✅ KORREKTER SUPABASE IMPORT -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
@@ -17,25 +16,9 @@ body{
 h1{margin:.2rem 0}
 .hint{opacity:.7;margin-bottom:1rem}
 
-/* Präsentationsmodus */
-body.presentation .nav,
-body.presentation .hint {
-  display:none;
-}
+.section{background:#1f2937;border-radius:14px;padding:1rem;margin-bottom:1rem}
+.nav{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
 
-/* Layout */
-.section{
-  background:#1f2937;
-  border-radius:14px;
-  padding:1rem;
-  margin-bottom:1rem
-}
-.nav{
-  display:flex;
-  gap:.6rem;
-  flex-wrap:wrap;
-  align-items:center
-}
 button{
   padding:.45rem 1.2rem;
   border-radius:999px;
@@ -57,31 +40,19 @@ select{padding:.35rem;border-radius:6px}
 .header-row{
   border-bottom:3px solid #64748b;
   opacity:.8;
-  letter-spacing:.08em;
   padding-bottom:.6rem;
   margin-bottom:.6rem
 }
-
-/* ✅ Animation rein optisch */
 .team{
   padding:.9rem 0;
-  border-top:3px solid #475569;
-  animation:fadeRow .35s ease both;
+  border-top:3px solid #475569
 }
 .team:first-child{border-top:none}
 
-@keyframes fadeRow{
-  from{opacity:0;transform:translateY(6px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
 .team-name{
-  font-size:1.4rem;
-  font-weight:700;
+  font-size:1.4rem;font-weight:700;
   text-transform:uppercase;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   padding-right:1.5rem;
   border-right:3px solid #64748b
 }
@@ -101,23 +72,20 @@ select{padding:.35rem;border-radius:6px}
   text-align:center;
   margin:1rem 0;
   color:#22c55e;
-  animation:fadeIn .6s ease
 }
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
 /* Zwischenstand */
 .scoreboard .row{
-  display:flex;
-  justify-content:space-between;
+  display:grid;
+  grid-template-columns:1fr auto;
   padding:.6rem 1rem;
-  border-bottom:2px solid #334155;
+  border-bottom:2px solid #334155
 }
 .scoreboard .gold{
   background:linear-gradient(135deg,#8f7a00,#d4af37,#bfa200);
   color:#1a1a1a;
   font-weight:800;
 }
-
 .hidden{display:none}
 </style>
 </head>
@@ -137,9 +105,6 @@ select{padding:.35rem;border-radius:6px}
   <button id="showAnswers" class="secondary">👀 Antworten anzeigen</button>
   <button id="showSolution" class="secondary">✅ Richtige Antwort anzeigen</button>
   <button id="showScoreBtn" class="secondary">🏆 Zwischenstand anzeigen</button>
-
-  <!-- ✅ Präsentationsmodus -->
-  <button id="presentationToggle" class="secondary">🎥 Präsentation</button>
 </div>
 
 <div id="solutionBox" class="solution hidden"></div>
@@ -161,7 +126,11 @@ select{padding:.35rem;border-radius:6px}
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
-/* DOM */
+const db = window.supabase.createClient(
+  "https://havaoqxnxnlmyfbldyic.supabase.co",
+  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+);
+
 const r1=document.getElementById("r1");
 const r2=document.getElementById("r2");
 const songSelect=document.getElementById("songSelect");
@@ -169,7 +138,6 @@ const showAnswers=document.getElementById("showAnswers");
 const showSolution=document.getElementById("showSolution");
 const showScoreBtn=document.getElementById("showScoreBtn");
 const backBtn=document.getElementById("backBtn");
-const presentationToggle=document.getElementById("presentationToggle");
 
 const roundView=document.getElementById("roundView");
 const scoreView=document.getElementById("scoreView");
@@ -177,29 +145,22 @@ const answersEl=document.getElementById("answers");
 const solutionBox=document.getElementById("solutionBox");
 const scoreboard=document.getElementById("scoreboard");
 
-/* Supabase */
-const db=window.supabase.createClient(
-  "https://havaoqxnxnlmyfbldyic.supabase.co",
-  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
-);
-
-/* State */
 const songCounts={1:15,2:16};
 let round=1,song=1;
 let teams=[],answersData=[];
-let answersVisible=false,solutionVisible=false;
+let answersVisible=false;
+let solutionVisible=false;
 let scores={};
 
 /* Utils */
-const norm=s=>(s||"")
- .toLowerCase().normalize("NFD")
+const norm=s=>(s||"").toLowerCase().normalize("NFD")
  .replace(/[\u0300-\u036f]/g,"")
  .replace(/[^a-z0-9]/g,"");
 
 function similarity(a,b){
- if(!a||!b) return 0;
  let m=0;
- for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i]===b[i]) m++;
+ for(let i=0;i<Math.min(a.length,b.length);i++)
+  if(a[i]===b[i]) m++;
  return m/Math.max(a.length,b.length);
 }
 function classifyR1(c,t){
@@ -212,11 +173,8 @@ function classifyR2(s){
  return{cls:"wrong",pts:0};
 }
 
-/* ✅ Lösungen – vollständig wie bei dir */
-const solutions = {
-  1:{ /* ... exakt dein kompletter Klassik‑Block ... */ },
-  2:{ /* ... exakt dein kompletter Filmmusik‑Block ... */ }
-};
+/* Lösungen – unverändert wie Trampolin */
+const solutions = /* DEIN KOMPLETTES solutions-OBJ (identisch zu Trampolin) */ ;
 
 /* Daten */
 async function load(){
@@ -231,13 +189,6 @@ function populateSongs(){
  for(let i=1;i<=songCounts[round];i++)
   songSelect.innerHTML+=`<option value="${i}">Song ${i}</option>`;
  song=1;
-}
-
-function resetView(){
- answersVisible=false;
- solutionVisible=false;
- solutionBox.classList.add("hidden");
- render();
 }
 
 function render(){
@@ -261,45 +212,58 @@ function render(){
  });
 }
 
+function showSolutionNow(){
+ solutionVisible=true;
+ solutionBox.textContent=solutions[round][song].disp;
+ solutionBox.classList.remove("hidden");
+
+ teams.forEach(team=>{
+  const a=answersData.find(x=>x.team_id===team.id&&x.round===round&&x.song===song);
+  if(!a) return;
+
+  let res;
+  if(round===1){
+    const sol=solutions[round][song];
+    const c=Math.max(...sol.c.map(s=>similarity(norm(a.artist),norm(s))));
+    const t=Math.max(...sol.t.map(s=>similarity(norm(a.title),norm(s))));
+    res=classifyR1(c,t);
+  }else{
+    const sol=solutions[round][song];
+    const sc=Math.max(...sol.m.map(s=>similarity(norm(a.movie),norm(s))));
+    res=classifyR2(sc);
+  }
+  scores[team.id]+=res.pts;
+ });
+ render();
+}
+
 function openScoreboard(){
  roundView.classList.add("hidden");
  scoreView.classList.remove("hidden");
  scoreboard.innerHTML="";
  const sorted=[...teams].sort((a,b)=>scores[b.id]-scores[a.id]);
  sorted.forEach((t,i)=>{
+  const right =
+    i===sorted.length-1
+      ? "🏆 Dummenpärchen 2026"
+      : `${scores[t.id]} Punkte`;
   const div=document.createElement("div");
   div.className="row";
   if(i===sorted.length-1) div.classList.add("gold");
-  div.innerHTML=`<span>${i+1}. ${t.name}${i===sorted.length-1?" 🏆 Dummenpärchen 2026":""}</span>
-                 <span>${scores[t.id]} Punkte</span>`;
+  div.innerHTML=`<span>${i+1}. ${t.name}</span><span>${right}</span>`;
   scoreboard.appendChild(div);
  });
 }
 
 /* Events */
-r1.onclick=()=>{round=1;populateSongs();resetView();r1.classList.add("active");r2.classList.remove("active")};
-r2.onclick=()=>{round=2;populateSongs();resetView();r2.classList.add("active");r1.classList.remove("active")};
-songSelect.onchange=e=>{song=Number(e.target.value);resetView()};
+r1.onclick=()=>{round=1;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");render();r1.classList.add("active");r2.classList.remove("active")};
+r2.onclick=()=>{round=2;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");render();r2.classList.add("active");r1.classList.remove("active")};
+songSelect.onchange=()=>{answersVisible=false;solutionBox.classList.add("hidden");render()};
 showAnswers.onclick=()=>{answersVisible=true;render()};
-showSolution.onclick=()=>{
- solutionBox.textContent=solutions[round][song].disp;
- solutionBox.classList.remove("hidden");
- solutionVisible=true;
- render();
-};
+showSolution.onclick=showSolutionNow;
 showScoreBtn.onclick=openScoreboard;
 backBtn.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden")};
 
-/* Präsentation */
-presentationToggle.onclick=()=>{
- document.body.classList.toggle("presentation");
- presentationToggle.textContent=
-  document.body.classList.contains("presentation")
-   ? "🔧 Moderation"
-   : "🎥 Präsentation";
-};
-
-/* Start */
 populateSongs();
 load();
 
