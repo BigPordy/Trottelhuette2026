@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hitster – Host‑Modus</title>
 
   <!-- =======================
@@ -25,9 +25,9 @@
     }
 
     h1 { margin-bottom: 0.25rem; }
+    h2 { margin-top: 0; }
 
     .hint {
-      font-size: 0.9rem;
       opacity: 0.7;
       margin-bottom: 1rem;
     }
@@ -69,12 +69,12 @@
     }
 
     /* =======================
-       TEAM- / ANTWORT-LAYOUT
+       TEAM / ANSWER LAYOUT
        BEGIN
        ======================= */
     .team {
       display: grid;
-      grid-template-columns: 340px 1fr; /* weiter nach rechts */
+      grid-template-columns: 360px 1fr;
       column-gap: 2.5rem;
       align-items: center;
       border-top: 1px solid #334155;
@@ -84,8 +84,8 @@
     .team-name {
       font-size: 1.5rem;
       font-weight: 700;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -93,23 +93,12 @@
 
     .answer {
       font-size: 1.2rem;
-      opacity: 0.95;
     }
 
-    .answer.hint {
-      opacity: 0.55;
-      font-style: italic;
-    }
-
-    .answer.correct {
-      color: #22c55e;
-      font-weight: 700;
-    }
-
-    .answer.wrong {
-      color: #ef4444;
-      font-weight: 700;
-    }
+    .answer.correct { color: #22c55e; font-weight: 700; }
+    .answer.partial { color: #eab308; font-weight: 700; }
+    .answer.wrong   { color: #ef4444; font-weight: 700; }
+    .answer.hint    { opacity: 0.6; font-style: italic; }
 
     .solution {
       font-size: 1.7rem;
@@ -119,7 +108,7 @@
       color: #22c55e;
     }
     /* =======================
-       TEAM- / ANTWORT-LAYOUT
+       TEAM / ANSWER LAYOUT
        ENDE
        ======================= */
   </style>
@@ -128,7 +117,7 @@
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">Phase E3 · Lösung anzeigen → Antworten grün / rot</div>
+<div class="hint">Runde 1: <b>Hitster – Klassik</b> · Lösung anzeigen → Grün / Gelb / Rot</div>
 
 <!-- =======================
      NAVIGATION
@@ -136,8 +125,8 @@
      ======================= -->
 <div class="section">
   <div class="nav">
-    <button id="round1Btn">🎵 Runde 1</button>
-    <button id="round2Btn">🎬 Runde 2</button>
+    <button id="round1Btn">🎵 Hitster – Klassik</button>
+    <button id="round2Btn">🎬 Filmmusik</button>
 
     Song:
     <select id="songSelect"></select>
@@ -150,28 +139,12 @@
      ENDE
      ======================= -->
 
-<!-- =======================
-     LÖSUNG
-     BEGIN
-     ======================= -->
 <div id="solutionBox" class="solution" style="display:none;"></div>
-<!-- =======================
-     LÖSUNG
-     ENDE
-     ======================= -->
 
-<!-- =======================
-     ANTWORTEN
-     BEGIN
-     ======================= -->
 <div class="section">
   <h2>Antworten</h2>
   <div id="answersContainer"></div>
 </div>
-<!-- =======================
-     ANTWORTEN
-     ENDE
-     ======================= -->
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -205,39 +178,66 @@ document.addEventListener("DOMContentLoaded", () => {
      ======================= */
 
   /* =======================
-     OFFIZIELLE LÖSUNGEN
+     HILFSFUNKTIONEN
+     BEGIN
+     ======================= */
+  const normalize = s =>
+    (s || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+
+  function similarity(a, b) {
+    if (!a || !b) return 0;
+    let m = 0;
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      if (a[i] === b[i]) m++;
+    }
+    return m / Math.max(a.length, b.length);
+  }
+
+  function classify(score) {
+    if (score >= 0.85) return "correct";
+    if (score >= 0.6)  return "partial";
+    return "wrong";
+  }
+  /* =======================
+     HILFSFUNKTIONEN
+     ENDE
+     ======================= */
+
+  /* =======================
+     EXPLIZITE LÖSUNGEN
+     RUNDE 1 – HITSTER KLASSIK
      BEGIN
      ======================= */
   const solutions = {
     1: {
-      1: { artist: "beethoven", title: "fuer elise" },
-      2: { artist: "vivaldi", title: "fruehling" }
-    },
-    2: {
-      1: "forrest gump",
-      2: "8 mile"
+      1: { composer:["ludwig van beethoven"], title:["fur elise","fuer elise"], display:"Ludwig van Beethoven – Für Elise" },
+      2: { composer:["antonio vivaldi"], title:["der fruhling","fruhling","la primavera"], display:"Antonio Vivaldi – Der Frühling" },
+      3: { composer:["wolfgang amadeus mozart"], title:["hochzeit des figaro","overture"], display:"W. A. Mozart – Hochzeit des Figaro (Ouvertüre)" },
+      4: { composer:["giuseppe verdi"], title:["la donna e mobile","donna e mobile"], display:"Giuseppe Verdi – La donna è mobile" },
+      5: { composer:["pjotr iljitsch tschaikowski"], title:["schwanensee"], display:"Tschaikowski – Schwanensee" },
+      6: { composer:["richard wagner"], title:["ritt der walkuren"], display:"Richard Wagner – Ritt der Walküren" },
+      7: { composer:["ludwig van beethoven"], title:["5 symphonie","schicksalssymphonie"], display:"Beethoven – 5. Symphonie" },
+      8: { composer:["johann sebastian bach"], title:["air"], display:"J. S. Bach – Air" },
+      9: { composer:["wolfgang amadeus mozart"], title:["eine kleine nachtmusik"], display:"Mozart – Eine kleine Nachtmusik" },
+      10:{ composer:["johann pachelbel"], title:["kanon","kanon in d"], display:"Pachelbel – Kanon in D" },
+      11:{ composer:["wolfgang amadeus mozart"], title:["rondo alla turca","turkischer marsch"], display:"Mozart – Rondo alla Turca" },
+      12:{ composer:["carl orff"], title:["o fortuna","carmina burana"], display:"Carl Orff – O Fortuna" },
+      13:{ composer:["georges bizet"], title:["carmen"], display:"Georges Bizet – Carmen" },
+      14:{ composer:["edvard grieg"], title:["morgenstimmung"], display:"Edvard Grieg – Morgenstimmung" },
+      15:{ composer:["johann strauss"], title:["an der schonen blauen donau"], display:"Johann Strauss II – An der schönen blauen Donau" }
     }
   };
   /* =======================
-     OFFIZIELLE LÖSUNGEN
+     EXPLIZITE LÖSUNGEN
      ENDE
      ======================= */
 
-  const normalize = s =>
-    (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-
   async function refreshData() {
-    teams = (await supabaseClient
-      .from("teams")
-      .select("*")
-      .order("created_at", { ascending: true })
-    ).data || [];
-
-    answers = (await supabaseClient
-      .from("answers")
-      .select("*")
-    ).data || [];
-
+    teams = (await supabaseClient.from("teams").select("*").order("created_at")).data || [];
+    answers = (await supabaseClient.from("answers").select("*")).data || [];
     render();
   }
 
@@ -245,10 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const sel = document.getElementById("songSelect");
     sel.innerHTML = "";
     for (let i = 1; i <= songCounts[round]; i++) {
-      const opt = document.createElement("option");
-      opt.value = i;
-      opt.textContent = `Song ${i}`;
-      sel.appendChild(opt);
+      sel.innerHTML += `<option value="${i}">Song ${i}</option>`;
     }
     song = 1;
   }
@@ -260,97 +257,50 @@ document.addEventListener("DOMContentLoaded", () => {
     teams.forEach(team => {
       const row = document.createElement("div");
       row.className = "team";
-
       row.innerHTML = `<div class="team-name">${team.name}</div>`;
 
       const ans = answers.find(a =>
-        a.team_id === team.id &&
-        a.round === round &&
-        a.song === song
+        a.team_id === team.id && a.round === round && a.song === song
       );
 
-      let answerHtml = "";
-
       if (!ans) {
-        answerHtml = `<div class="answer hint">Keine Antwort</div>`;
+        row.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
       } else if (!solutionVisible) {
-        answerHtml = round === 1
-          ? `<div class="answer">${ans.artist} – ${ans.title}</div>`
-          : `<div class="answer">${ans.movie}</div>`;
+        row.innerHTML += `<div class="answer">${ans.artist} – ${ans.title}</div>`;
       } else {
-        let correct = false;
-
-        if (round === 1) {
-          const sol = solutions[1][song];
-          correct =
-            normalize(ans.artist).includes(sol.artist) &&
-            normalize(ans.title).includes(sol.title);
-        } else {
-          correct =
-            normalize(ans.movie).includes(normalize(solutions[2][song]));
-        }
-
-        answerHtml = `<div class="answer ${correct ? "correct" : "wrong"}">
-          ${round === 1 ? `${ans.artist} – ${ans.title}` : ans.movie}
-        </div>`;
+        const sol = solutions[round][song];
+        const compScore = Math.max(...sol.composer.map(c => similarity(normalize(ans.artist), normalize(c))));
+        const titleScore = Math.max(...sol.title.map(t => similarity(normalize(ans.title), normalize(t))));
+        const cls = classify(Math.max(compScore, titleScore));
+        row.innerHTML += `<div class="answer ${cls}">${ans.artist} – ${ans.title}</div>`;
       }
-
-      row.innerHTML += answerHtml;
       container.appendChild(row);
     });
   }
 
-  function showSolution() {
-    const box = document.getElementById("solutionBox");
-    const sol =
-      round === 1
-        ? solutions[1][song]
-          ? `${solutions[1][song].artist} – ${solutions[1][song].title}`
-          : null
-        : solutions[2][song];
-
-    if (!sol) return;
-
-    box.textContent = `Lösung: ${sol}`;
-    box.style.display = "block";
-    solutionVisible = true;
-    render();
-  }
-
-  function hideSolution() {
+  document.getElementById("round1Btn").onclick = () => {
+    round = 1;
     solutionVisible = false;
     document.getElementById("solutionBox").style.display = "none";
-  }
-
-  /* =======================
-     EVENT BINDINGS
-     BEGIN
-     ======================= */
-  document.getElementById("round1Btn").addEventListener("click", () => {
-    round = 1;
-    hideSolution();
     populateSongs();
     render();
-  });
+  };
 
-  document.getElementById("round2Btn").addEventListener("click", () => {
-    round = 2;
-    hideSolution();
-    populateSongs();
+  document.getElementById("solutionBtn").onclick = () => {
+    const sol = solutions[round][song];
+    if (!sol) return;
+    document.getElementById("solutionBox").textContent = "Lösung: " + sol.display;
+    document.getElementById("solutionBox").style.display = "block";
+    solutionVisible = true;
     render();
-  });
+  };
 
-  document.getElementById("songSelect").addEventListener("change", e => {
+  document.getElementById("songSelect").onchange = e => {
     song = Number(e.target.value);
-    hideSolution();
+    solutionVisible = false;
+    document.getElementById("solutionBox").style.display = "none";
     render();
-  });
-
-  document.getElementById("solutionBtn").addEventListener("click", showSolution);
-  /* =======================
-     EVENT BINDINGS
-     ENDE
-     ======================= */
+  };
 
   populateSongs();
   refreshData();
@@ -359,3 +309,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </body>
 </html>
+``
