@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hitster – Host‑Modus (DEBUG)</title>
+  <title>Hitster – Host‑Modus</title>
 
-  <!-- ✅ KORREKTER Supabase-Import -->
+  <!-- ✅ KORREKTER SUPABASE-IMPORT (WICHTIG) -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
     body{
       margin:0;padding:1rem;
       font-family:system-ui,sans-serif;
-      background:#020617;color:white;
+      background:#020617;color:white
     }
     h1{margin:.2rem 0}
     .hint{opacity:.7;margin-bottom:1rem}
@@ -26,7 +26,7 @@
       border:none;
       background:#2563eb;
       color:white;
-      cursor:pointer;
+      cursor:pointer
     }
     button.secondary{background:#475569}
     button.active{background:#16a34a}
@@ -35,17 +35,17 @@
     .header-row,.team{
       display:grid;
       grid-template-columns:360px 1fr;
-      column-gap:2.5rem;
+      column-gap:2.5rem
     }
     .header-row{
       border-bottom:3px solid #64748b;
       opacity:.8;
       padding-bottom:.6rem;
-      margin-bottom:.6rem;
+      margin-bottom:.6rem
     }
     .team{
       padding:.9rem 0;
-      border-top:3px solid #475569;
+      border-top:3px solid #475569
     }
     .team:first-child{border-top:none}
 
@@ -57,7 +57,7 @@
       overflow:hidden;
       text-overflow:ellipsis;
       padding-right:1.5rem;
-      border-right:3px solid #64748b;
+      border-right:3px solid #64748b
     }
 
     .answer{padding-left:1.5rem;font-size:1.15rem}
@@ -79,7 +79,7 @@
       display:grid;
       grid-template-columns:1fr auto;
       padding:.6rem 1rem;
-      border-bottom:2px solid #334155;
+      border-bottom:2px solid #334155
     }
     .scoreboard .gold{
       background:linear-gradient(135deg,#8f7a00,#d4af37,#bfa200);
@@ -93,8 +93,8 @@
 
 <body>
 
-<h1>🎤 Hitster – Host‑Modus (DEBUG)</h1>
-<div class="hint">DEBUG-Version mit Guard-Logs</div>
+<h1>🎤 Hitster – Host‑Modus</h1>
+<div class="hint">Antworten → Lösung → Bewertung → Zwischenstand</div>
 
 <div class="section nav">
   <button id="r1" class="active">🎵 Hitster – Klassik</button>
@@ -121,24 +121,17 @@
 <div id="scoreView" class="section hidden">
   <h2>🏆 Zwischenstand</h2>
   <div id="scoreboard" class="scoreboard"></div>
-  <button id="backBtn" class="secondary">⬅ Zurück</button>
+  <button id="backBtn" class="secondary">⬅ Zurück zum Spiel</button>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  console.log("[DEBUG] DOMContentLoaded gestartet");
-
-  /* ===== Guard: Supabase ===== */
-  console.assert(window.supabase, "[DEBUG] window.supabase NICHT geladen");
-
   const db = window.supabase.createClient(
     "https://havaoqxnxnlmyfbldyic.supabase.co",
     "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
   );
-  console.log("[DEBUG] Supabase Client erstellt", db);
 
-  /* ===== DOM ===== */
   const r1 = document.getElementById("r1");
   const r2 = document.getElementById("r2");
   const songSelect = document.getElementById("songSelect");
@@ -153,53 +146,90 @@ document.addEventListener("DOMContentLoaded", () => {
   const solutionBox = document.getElementById("solutionBox");
   const scoreboard = document.getElementById("scoreboard");
 
-  console.assert(r1 && r2 && songSelect && showAnswers && showSolution && showScoreBtn,
-    "[DEBUG] Ein oder mehrere DOM-Elemente fehlen");
-
-  /* ===== State ===== */
-  const songCounts = {1:15,2:16};
+  const songCounts = {1:15, 2:16};
   let round = 1;
   let song = 1;
   let teams = [];
   let answersData = [];
   let answersVisible = false;
+  let solutionVisible = false;
   let scores = {};
 
-  /* ===== Test-Lösungen (DEBUG minimal) ===== */
+  const norm = s => (s||"").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]/g,"");
+
+  function similarity(a,b){
+    let m=0;
+    for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i]===b[i]) m++;
+    return m/Math.max(a.length,b.length);
+  }
+
+  function classifyR1(c,t){
+    if(c>=.85 && t>=.85) return {cls:"correct", pts:3};
+    if(c>=.6 || t>=.6) return {cls:"partial", pts:1};
+    return {cls:"wrong", pts:0};
+  }
+
+  function classifyR2(s){
+    if(s>=.8) return {cls:"correct", pts:2};
+    return {cls:"wrong", pts:0};
+  }
+
   const solutions = {
-    1: {1:{disp:"Ludwig van Beethoven – Für Elise"}},
-    2: {1:{disp:"Forrest Gump"}}
+    1:{
+      1:{disp:"Ludwig van Beethoven – Für Elise",c:["beethoven"],t:["fur elise","fuer elise"]},
+      2:{disp:"Antonio Vivaldi – Der Frühling",c:["vivaldi"],t:["fruhling","la primavera"]},
+      3:{disp:"Mozart – Hochzeit des Figaro",c:["mozart"],t:["hochzeit des figaro"]},
+      4:{disp:"Giuseppe Verdi – La donna è mobile",c:["verdi"],t:["la donna e mobile"]},
+      5:{disp:"Tschaikowski – Schwanensee",c:["tschaikowski"],t:["schwanensee"]},
+      6:{disp:"Richard Wagner – Ritt der Walküren",c:["wagner"],t:["ritt der walkuren"]},
+      7:{disp:"Beethoven – 5. Symphonie",c:["beethoven"],t:["5 symphonie","schicksalssymphonie"]},
+      8:{disp:"J. S. Bach – Air",c:["bach"],t:["air"]},
+      9:{disp:"Mozart – Eine kleine Nachtmusik",c:["mozart"],t:["eine kleine nachtmusik"]},
+      10:{disp:"Pachelbel – Kanon in D",c:["pachelbel"],t:["kanon"]},
+      11:{disp:"Mozart – Rondo alla Turca",c:["mozart"],t:["rondo alla turca"]},
+      12:{disp:"Carl Orff – O Fortuna",c:["orff"],t:["o fortuna"]},
+      13:{disp:"Bizet – Carmen",c:["bizet"],t:["carmen"]},
+      14:{disp:"Edvard Grieg – Morgenstimmung",c:["grieg"],t:["morgenstimmung"]},
+      15:{disp:"Johann Strauss II – An der schönen blauen Donau",c:["strauss"],t:["an der schonen blauen donau"]}
+    },
+    2:{
+      1:{disp:"Forrest Gump",m:["forrest gump"]},
+      2:{disp:"8 Mile",m:["8 mile","eight mile"]},
+      3:{disp:"Die fabelhafte Welt der Amélie",m:["amelie"]},
+      4:{disp:"Harry Potter – Hedwig’s Theme",m:["harry potter","hedwig"]},
+      5:{disp:"The Godfather",m:["godfather","pate"]},
+      6:{disp:"Fight Club",m:["fight club"]},
+      7:{disp:"Ziemlich beste Freunde",m:["ziemlich beste freunde"]},
+      8:{disp:"Interstellar",m:["interstellar"]},
+      9:{disp:"Schindlers Liste",m:["schindlers liste"]},
+      10:{disp:"Inception",m:["inception"]},
+      11:{disp:"The Office",m:["the office"]},
+      12:{disp:"Requiem for a Dream",m:["requiem for a dream"]},
+      13:{disp:"Chariots of Fire",m:["chariots","stunde des siegers"]},
+      14:{disp:"Batman Begins",m:["batman begins"]},
+      15:{disp:"Barbie",m:["barbie"]},
+      16:{disp:"Sherlock Holmes",m:["sherlock holmes"]}
+    }
   };
 
-  /* ===== Daten ===== */
   async function load(){
-    console.log("[DEBUG] load() gestartet");
-
-    const tRes = await db.from("teams").select("*").order("created_at");
-    console.log("[DEBUG] teams result", tRes);
-    teams = tRes.data || [];
-
-    const aRes = await db.from("answers").select("*");
-    console.log("[DEBUG] answers result", aRes);
-    answersData = aRes.data || [];
-
-    teams.forEach(t=>scores[t.id]=scores[t.id]||0);
-
-    console.log("[DEBUG] Teams:", teams.length, "Answers:", answersData.length);
+    teams = (await db.from("teams").select("*").order("created_at")).data || [];
+    answersData = (await db.from("answers").select("*")).data || [];
+    teams.forEach(t => scores[t.id] = scores[t.id] || 0);
     render();
   }
 
   function populateSongs(){
-    console.log("[DEBUG] populateSongs()", round);
     songSelect.innerHTML="";
     for(let i=1;i<=songCounts[round];i++){
-      songSelect.innerHTML+=`<option value="${i}">Song ${i}</option>`;
+      songSelect.innerHTML += `<option value="${i}">Song ${i}</option>`;
     }
     song=1;
   }
 
   function render(){
-    console.log("[DEBUG] render()", {round, song, answersVisible});
     answersEl.innerHTML="";
     teams.forEach(team=>{
       const row=document.createElement("div");
@@ -213,43 +243,62 @@ document.addEventListener("DOMContentLoaded", () => {
       } else if(!a){
         row.innerHTML+=`<div class="answer hint">Keine Antwort</div>`;
       } else {
-        row.innerHTML+=`<div class="answer">${round===1 ? a.artist+" – "+a.title : a.movie}</div>`;
+        row.innerHTML+= round===1
+          ? `<div class="answer">${a.artist} – ${a.title}</div>`
+          : `<div class="answer">${a.movie}</div>`;
       }
       answersEl.appendChild(row);
     });
   }
 
   function showSolutionNow(){
-    console.log("[DEBUG] showSolutionNow()", round, song);
-    const sol=solutions[round]?.[song];
-    console.assert(sol, "[DEBUG] Keine Lösung gefunden für", round, song);
-    solutionBox.textContent=sol?.disp || "KEINE LÖSUNG";
+    solutionVisible=true;
+    solutionBox.textContent=solutions[round][song].disp;
     solutionBox.classList.remove("hidden");
+
+    teams.forEach(team=>{
+      const a=answersData.find(x=>x.team_id===team.id && x.round===round && x.song===song);
+      if(!a) return;
+
+      let res;
+      if(round===1){
+        const sol=solutions[round][song];
+        const c=Math.max(...sol.c.map(s=>similarity(norm(a.artist),norm(s))));
+        const t=Math.max(...sol.t.map(s=>similarity(norm(a.title),norm(s))));
+        res=classifyR1(c,t);
+      } else {
+        const sol=solutions[round][song];
+        const sc=Math.max(...sol.m.map(s=>similarity(norm(a.movie),norm(s))));
+        res=classifyR2(sc);
+      }
+
+      scores[team.id]+=res.pts;
+      const row=document.getElementById(`team-${team.id}`);
+      if(row) row.classList.add(res.cls);
+    });
   }
 
   function openScoreboard(){
-    console.log("[DEBUG] openScoreboard()");
     roundView.classList.add("hidden");
     scoreView.classList.remove("hidden");
     scoreboard.innerHTML="";
-
     const sorted=[...teams].sort((a,b)=>scores[b.id]-scores[a.id]);
     sorted.forEach((t,i)=>{
+      const right=i===sorted.length-1?"🏆 Dummenpärchen 2026":`${scores[t.id]} Punkte`;
       const div=document.createElement("div");
-      div.className="row";
-      div.innerHTML=`<span>${i+1}. ${t.name}</span><span>${scores[t.id]} Punkte</span>`;
+      div.className="row"+(i===sorted.length-1?" gold":"");
+      div.innerHTML=`<span>${i+1}. ${t.name}</span><span>${right}</span>`;
       scoreboard.appendChild(div);
     });
   }
 
-  /* ===== Events ===== */
-  r1.onclick=()=>{console.log("[DEBUG] r1 click"); round=1; populateSongs(); answersVisible=false; render();};
-  r2.onclick=()=>{console.log("[DEBUG] r2 click"); round=2; populateSongs(); answersVisible=false; render();};
-  songSelect.onchange=()=>{console.log("[DEBUG] song change"); answersVisible=false; render();};
-  showAnswers.onclick=()=>{console.log("[DEBUG] showAnswers click"); answersVisible=true; render();};
+  r1.onclick=()=>{round=1;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");render()};
+  r2.onclick=()=>{round=2;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");render()};
+  songSelect.onchange=()=>{answersVisible=false;solutionBox.classList.add("hidden");render()};
+  showAnswers.onclick=()=>{answersVisible=true;render()};
   showSolution.onclick=showSolutionNow;
   showScoreBtn.onclick=openScoreboard;
-  backBtn.onclick=()=>{console.log("[DEBUG] back"); scoreView.classList.add("hidden"); roundView.classList.remove("hidden");};
+  backBtn.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden")};
 
   populateSongs();
   load();
