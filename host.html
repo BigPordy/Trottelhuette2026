@@ -237,6 +237,8 @@ back.onclick=()=>{
 const saveGame = document.getElementById("saveGame");
 
 saveGame.onclick = async () => {
+  console.log("SAVE BUTTON CLICKED", scores);
+
   const payload = Object.entries(scores).map(([team_id, score]) => ({
     team_id: Number(team_id),
     score,
