@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hitster – Live Spiel</title>
+
+<!-- ✅ Supabase korrekt einbinden -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(180deg,#0f172a,#020617);
+  color: white;
+  font-family: system-ui, sans-serif;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 360px;
+  background:#1f2937;
+  border-radius:18px;
+  padding:1.8rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  text-align:center;
+}
+
+input {
+  width:100%;
+  padding:0.55rem;
+  margin-top:0.75rem;
+  border-radius:6px;
+  border:none;
+  font-size:1rem;
+}
+
+button {
+  margin-top:1.1rem;
+  padding:0.6rem 1.4rem;
+  border-radius:999px;
+  border:none;
+  background:#2563eb;
+  color:white;
+  font-size:1rem;
+  cursor:pointer;
+}
+
+button:active { transform: scale(0.97); }
+
+.nav {
+  display:flex;
+  justify-content:space-between;
+  gap:0.5rem;
+  margin-top:0.75rem;
+}
+
+.time {
+  margin-top:0.4rem;
+  font-size:0.9rem;
+  opacity:0.85;
+}
+
+.hint {
+  margin-top:0.6rem;
+  font-size:0.85rem;
+  opacity:0.75;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ✅ STARTSCREEN -->
+<div id="startScreen" class="screen">
+  <div class="card">
+    <h2>👥 Team anmelden</h2>
+    <input id="teamNameInput" placeholder="Teamname eingeben">
+    <button id="startBtn" type="button">Spiel starten</button>
+    <div id="startError" class="hint"></div>
+  </div>
+</div>
+
+<!-- ✅ INTRO RUNDE 1 -->
+<div id="introR1" class="screen" style="display:none;">
+  <div class="card">
+    <h2>🎵 Runde 1 – Hitster</h2>
+    <p class="hint">
+      Erratet <b>Interpret</b> und <b>Songtitel</b><br><br>
+      ✅ Interpret richtig = 1 Punkt<br>
+      ✅ Songtitel richtig = 1 Punkt<br>
+      ⭐ Beide richtig = Bonuspunkt<br><br>
+      <i>Max. 3 Punkte pro Song</i>
+    </p>
+    <button onclick="startRound(0)">Runde starten</button>
+  </div>
+</div>
+
+<!-- ✅ INTRO RUNDE 2 -->
+<div id="introR2" class="screen" style="display:none;">
+  <div class="card">
+    <h2>🎬 Runde 2 – Filmmusik</h2>
+    <p class="hint">
+      Aus welchem Film stammt die Musik?<br><br>
+      ✅ Richtige Antwort = <b>2 Punkte</b>
+    </p>
+    <button onclick="startRound(1)">Runde starten</button>
+  </div>
+</div>
+
+<!-- ✅ GAME -->
+<div id="gameScreen" class="screen" style="display:none;">
+  <div class="card">
+
+    <!-- RUNDEN NAV -->
+    <div class="nav">
+      <button onclick="showIntro(0)">🎵 Runde 1</button>
+      <button onclick="showIntro(1)">🎬 Runde 2</button>
+    </div>
+
+    <h2 id="roundTitle"></h2>
+    <div id="songInfo" class="hint"></div>
+
+    <!-- AUDIO -->
+    <audio id="player"></audio>
+    <div class="nav">
+      <button onclick="player.currentTime=0">⏮</button>
+      <button onclick="toggleAudio()">▶ / ⏸</button>
+    </div>
+    <div class="time">
+      <span id="current">00:00</span> / <span id="duration">00:00</span>
+    </div>
+
+    <!-- INPUTS -->
+    <div id="r1Inputs">
+      <input id="artistInput" placeholder="Interpret">
+      <input id="titleInput" placeholder="Songtitel">
+    </div>
+
+    <div id="r2Inputs" style="display:none;">
+      <input id="movieInput" placeholder="Filmtitel">
+    </div>
+
+    <button onclick="saveAnswer()">Antwort speichern</button>
+
+    <!-- SONG NAV -->
+    <div class="nav">
+      <button onclick="prevSong()">⏮ Vorher</button>
+      <button onclick="nextSong()">⏭ Nächster</button>
+    </div>
+
+    <div id="status" class="hint"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const supabase = window.supabase.createClient(
+    "https://havaoqxnxnlmyfbldyic.supabase.co",
+    "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+  );
+
+  /* TRACKS */
+  const tracks = [
+    [
+      "audio/01_fuer_elise.mp3","audio/02_vivaldi_fruehling.mp3","audio/03_mozart_nachtmusik.mp3",
+      "audio/04_verdi_ladonna.mp3","audio/05_tschaikowski_schwanensee.mp3","audio/06_wagner_walkueren.mp3",
+      "audio/07_beethoven_symphonie5.mp3","audio/08_bach_air.mp3","audio/09_mozart_nachtmusik.mp3",
+      "audio/10_pachelbel_kanon.mp3","audio/11_mozart_turca.mp3","audio/12_orff_fortuna.mp3",
+      "audio/13_bizet_carmen.mp3","audio/14_grieg_morgenstimmung.mp3","audio/15_strauss_donauwalser.mp3"
+    ],
+    [
+      "audio-round2/01_forrest_gump.mp3","audio-round2/02_8mile.mp3","audio-round2/03_amelie.mp3",
+      "audio-round2/04_harry_potter.mp3","audio-round2/05_godfather.mp3","audio-round2/06_fight_club.mp3",
+      "audio-round2/07_intouchables.mp3","audio-round2/08_interstellar.mp3","audio-round2/09_schindlers_list.mp3",
+      "audio-round2/10_inception.mp3","audio-round2/11_theoffice.mp3","audio-round2/12_requiem_for_a_dream.mp3",
+      "audio-round2/13_stunde_des_siegers.mp3","audio-round2/14_batman_begins.mp3",
+      "audio-round2/15_barbie.mp3","audio-round2/16_sherlock_holmes.mp3"
+    ]
+  ];
+
+  /* STATE */
+  let teamId = null;
+  let round = 0;
+  let song = 0;
+
+  /* DOM */
+  const startScreen = document.getElementById("startScreen");
+  const introR1 = document.getElementById("introR1");
+  const introR2 = document.getElementById("introR2");
+  const gameScreen = document.getElementById("gameScreen");
+
+  const startBtn = document.getElementById("startBtn");
+  const teamNameInput = document.getElementById("teamNameInput");
+  const startError = document.getElementById("startError");
+
+  const roundTitle = document.getElementById("roundTitle");
+  const songInfo = document.getElementById("songInfo");
+  const player = document.getElementById("player");
+  const current = document.getElementById("current");
+  const duration = document.getElementById("duration");
+
+  const r1Inputs = document.getElementById("r1Inputs");
+  const r2Inputs = document.getElementById("r2Inputs");
+
+  const artistInput = document.getElementById("artistInput");
+  const titleInput = document.getElementById("titleInput");
+  const movieInput = document.getElementById("movieInput");
+  const status = document.getElementById("status");
+
+  /* START */
+  startBtn.addEventListener("click", async () => {
+    startError.textContent = "";
+    const name = teamNameInput.value.trim();
+    if (!name) {
+      startError.textContent = "Bitte Teamnamen eingeben";
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("teams")
+      .insert({ name })
+      .select()
+      .single();
+
+    if (error) {
+      startError.textContent = "Fehler beim Start";
+      return;
+    }
+
+    teamId = data.id;
+    startScreen.style.display = "none";
+    introR1.style.display = "flex";
+  });
+
+  /* INTRO / ROUND */
+  window.showIntro = (r) => {
+    gameScreen.style.display = "none";
+    (r === 0 ? introR1 : introR2).style.display = "flex";
+  };
+
+  window.startRound = (r) => {
+    round = r;
+    song = 0;
+    introR1.style.display = "none";
+    introR2.style.display = "none";
+    gameScreen.style.display = "flex";
+    loadSong();
+  };
+
+  function loadSong() {
+    player.src = tracks[round][song];
+    roundTitle.textContent = round === 0 ? "🎵 Runde 1 – Hitster" : "🎬 Runde 2 – Filmmusik";
+    songInfo.textContent = `Song ${song + 1} von ${tracks[round].length}`;
+    r1Inputs.style.display = round === 0 ? "block" : "none";
+    r2Inputs.style.display = round === 1 ? "block" : "none";
+    status.textContent = "";
+  }
+
+  window.toggleAudio = () => {
+    player.paused ? player.play() : player.pause();
+  };
+
+  player.ontimeupdate = () => {
+    current.textContent = new Date(player.currentTime * 1000).toISOString().substring(14, 19);
+    duration.textContent = new Date(player.duration * 1000).toISOString().substring(14, 19);
+  };
+
+  window.nextSong = () => { song = (song + 1) % tracks[round].length; loadSong(); };
+  window.prevSong = () => { if (song > 0) song--; loadSong(); };
+
+  window.saveAnswer = async () => {
+    await supabase.from("answers").upsert({
+      team_id: teamId,
+      round: round + 1,
+      song: song + 1,
+      artist: artistInput.value || null,
+      title: titleInput.value || null,
+      movie: movieInput.value || null
+    }, { onConflict: "team_id,round,song" });
+
+    artistInput.value = titleInput.value = movieInput.value = "";
+    status.textContent = "✅ Gespeichert";
+  };
+
+});
+</script>
+
+</body>
+</html>
