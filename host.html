@@ -2,52 +2,204 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hitster – Host‑Modus</title>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<title>Hitster – Host Live</title>
 
 <style>
-body { background:#020617; color:white; font-family:system-ui; padding:1rem; }
-.card { background:#1f2937; padding:1rem; border-radius:12px; margin-bottom:1rem; }
+body {
+  margin: 0;
+  padding: 1rem;
+  font-family: system-ui, sans-serif;
+  background: #020617;
+  color: white;
+}
+
+h1, h2 {
+  margin-top: 0.5rem;
+}
+
+.section {
+  background: #1f2937;
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+button {
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+select {
+  padding: 0.3rem;
+  border-radius: 6px;
+  border: none;
+}
+
+.team {
+  border-top: 1px solid #334155;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.answer {
+  margin-left: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.score {
+  font-weight: bold;
+}
+
+.checkbox {
+  margin-right: 0.4rem;
+}
 </style>
 </head>
 
 <body>
 
-<h1>🎤 Host‑Modus (LIVE)</h1>
-<div id="content"></div>
+<h1>🎤 Hitster – Host‑Modus</h1>
+
+<div class="section">
+  <h2>Navigation</h2>
+  <div class="nav">
+    <button onclick="setRound(1)">🎵 Runde 1</button>
+    <button onclick="setRound(2)">🎬 Runde 2</button>
+  </div>
+  Song:
+  <select id="songSelect" onchange="render()"></select>
+</div>
+
+<div class="section">
+  <h2>Antworten</h2>
+  <div id="answers"></div>
+</div>
+
+<div class="section">
+  <h2>🏆 Leaderboard</h2>
+  <div id="leaderboard"></div>
+</div>
 
 <script>
-const supabase = supabase.createClient(
+const supabase = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 
-async function load() {
-  const { data: teams } = await supabase.from("teams").select("*");
-  const { data: answers } = await supabase.from("answers").select("*");
+const songCounts = { 1: 15, 2: 16 };
 
-  content.innerHTML = "";
+let round = 1;
+let song = 1;
+let teams = [];
+let answers = [];
+let scores = {};
 
-  teams.forEach(t => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `<h3>${t.name}</h3>`;
+/* INIT */
+async function init() {
+  const t = await supabase.from("teams").select("*");
+  const a = await supabase.from("answers").select("*");
 
-    answers
-      .filter(a => a.team_id === t.id)
-      .forEach(a => {
-        div.innerHTML += `<p>R${a.round} | Song ${a.song}: 
-          ${a.artist || ""} ${a.title || ""} ${a.movie || ""}</p>`;
-      });
+  teams = t.data || [];
+  answers = a.data || [];
 
-    content.appendChild(div);
-  });
+  setRound(1);
 }
 
-load();
-supabase.channel("live")
-  .on("postgres_changes", { event: "*", schema: "public", table: "answers" }, load)
-  .subscribe();
+function setRound(r) {
+  round = r;
+  const sel = document.getElementById("songSelect");
+  sel.innerHTML = "";
+  for (let i = 1; i <= songCounts[r]; i++) {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = `Song ${i}`;
+    sel.appendChild(opt);
+  }
+  song = 1;
+  render();
+}
+
+function render() {
+  song = Number(document.getElementById("songSelect").value);
+  const container = document.getElementById("answers");
+  container.innerHTML = "";
+  scores = {};
+
+  teams.forEach(team => {
+    scores[team.id] = 0;
+
+    const div = document.createElement("div");
+    div.className = "team";
+    div.innerHTML = `<h3>${team.name}</h3>`;
+
+    const ans = answers.find(a =>
+      a.team_id === team.id &&
+      a.round === round &&
+      a.song === song
+    );
+
+    if (!ans) {
+      div.innerHTML += `<div class="answer">Keine Antwort</div>`;
+      container.appendChild(div);
+      return;
+    }
+
+    if (round === 1) {
+      div.innerHTML += `
+        <div class="answer">
+          ${ans.artist || "-"} – ${ans.title || "-"}
+        </div>
+        <label><input class="checkbox" type="checkbox" onchange="updateScore('${team.id}',1)"> Interpret</label>
+        <label><input class="checkbox" type="checkbox" onchange="updateScore('${team.id}',1)"> Titel</label>
+        <label><input class="checkbox" type="checkbox" onchange="updateScore('${team.id}',1)"> Bonus</label>
+      `;
+    } else {
+      div.innerHTML += `
+        <div class="answer">${ans.movie || "-"}</div>
+        <label><input class="checkbox" type="checkbox" onchange="updateScore('${team.id}',2)"> richtig</label>
+      `;
+    }
+
+    container.appendChild(div);
+  });
+
+  renderLeaderboard();
+}
+
+function updateScore(teamId, add) {
+  scores[teamId] += add === 1 ? 1 : 2;
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const lb = document.getElementById("leaderboard");
+  lb.innerHTML = "";
+
+  teams
+    .map(t => ({ name: t.name, score: scores[t.id] || 0 }))
+    .sort((a,b)=>b.score-a.score)
+    .forEach(t => {
+      lb.innerHTML += `<div class="score">${t.name}: ${t.score} Punkte</div>`;
+    });
+}
+
+/* START */
+init();
 </script>
 
 </body>
