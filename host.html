@@ -6,12 +6,12 @@
   <title>Hitster – Host‑Modus</title>
 
   <!-- =======================
-       SUPABASE CLIENT
+       SUPABASE SCRIPT (UMD)
        BEGIN
        ======================= -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@supe-js@2</script>
   <!-- =======================
-       SUPABASE CLIENT
+       SUPABASE SCRIPT
        ENDE
        ======================= -->
 
@@ -22,10 +22,6 @@
       font-family: system-ui, sans-serif;
       background: #020617;
       color: white;
-    }
-
-    h1, h2 {
-      margin-top: 0.5rem;
     }
 
     .section {
@@ -67,19 +63,16 @@
 
     .team-name {
       font-weight: bold;
-      margin-bottom: 0.25rem;
     }
 
     .answer {
       margin-left: 0.5rem;
-      font-size: 0.95rem;
       opacity: 0.9;
     }
 
     .hint {
       font-size: 0.8rem;
       opacity: 0.6;
-      margin-left: 0.5rem;
     }
   </style>
 </head>
@@ -87,13 +80,12 @@
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">E1 – neutrale Antwortanzeige (keine Bewertung)</div>
+<div class="hint">E1 – neutrale Antwortanzeige</div>
 
 <div class="section">
-  <h2>Navigation</h2>
   <div class="nav">
-    <button onclick="setRound(1)">🎵 Runde 1</button>
-    <button onclick="setRound(2)">🎬 Runde 2</button>
+    <button onclick="setRound(1)">🎵 Runde 1</button>
+    <button onclick="setRound(2)">🎬 Runde 2</button>
     Song:
     <select id="songSelect" onchange="render()"></select>
   </div>
@@ -106,18 +98,17 @@
 
 <script>
 /* =======================
-   SUPABASE INIT
+   SUPABASE CLIENT
    BEGIN
    ======================= */
-const supabase = window.supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 /* =======================
-   SUPABASE INIT
+   SUPABASE CLIENT
    ENDE
    ======================= */
-
 
 /* =======================
    STATE
@@ -133,40 +124,29 @@ let answersData = [];
    ENDE
    ======================= */
 
-
 /* =======================
    DATA + REALTIME
    BEGIN
    ======================= */
 async function refreshData() {
-  const teamsResult = await supabase
+  teams = (await supabaseClient
     .from("teams")
     .select("*")
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+  ).data || [];
 
-  const answersResult = await supabase
+  answersData = (await supabaseClient
     .from("answers")
-    .select("*");
-
-  teams = teamsResult.data || [];
-  answersData = answersResult.data || [];
+    .select("*")
+  ).data || [];
 
   render();
 }
 
 function subscribeRealtime() {
-  supabase
-    .channel("host-e1")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "teams" },
-      refreshData
-    )
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "answers" },
-      refreshData
-    )
+  supabaseClient.channel("host-e1")
+    .on("postgres_changes", { event: "*", schema: "public", table: "teams" }, refreshData)
+    .on("postgres_changes", { event: "*", schema: "public", table: "answers" }, refreshData)
     .subscribe();
 }
 /* =======================
@@ -174,24 +154,17 @@ function subscribeRealtime() {
    ENDE
    ======================= */
 
-
 /* =======================
    UI
    BEGIN
    ======================= */
 function setRound(r) {
   round = r;
-
-  const select = document.getElementById("songSelect");
-  select.innerHTML = "";
-
+  const sel = document.getElementById("songSelect");
+  sel.innerHTML = "";
   for (let i = 1; i <= songCounts[r]; i++) {
-    const opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = `Song ${i}`;
-    select.appendChild(opt);
+    sel.innerHTML += `<option value="${i}">Song ${i}</option>`;
   }
-
   song = 1;
   render();
 }
@@ -199,13 +172,11 @@ function setRound(r) {
 function render() {
   const container = document.getElementById("answersContainer");
   container.innerHTML = "";
-
   song = Number(document.getElementById("songSelect").value);
 
   teams.forEach(team => {
     const block = document.createElement("div");
     block.className = "team";
-
     block.innerHTML = `<div class="team-name">${team.name}</div>`;
 
     const ans = answersData.find(a =>
@@ -215,13 +186,11 @@ function render() {
     );
 
     if (ans) {
-      if (round === 1) {
-        block.innerHTML += `<div class="answer">${ans.artist} – ${ans.title}</div>`;
-      } else {
-        block.innerHTML += `<div class="answer">${ans.movie}</div>`;
-      }
+      block.innerHTML += round === 1
+        ? `<div class="answer">${ans.artist} – ${ans.title}</div>`
+        : `<div class="answer">${ans.movie}</div>`;
     } else {
-      block.innerHTML += `<div class="answer hint">Keine Antwort abgegeben</div>`;
+      block.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
     }
 
     container.appendChild(block);
@@ -231,7 +200,6 @@ function render() {
    UI
    ENDE
    ======================= */
-
 
 /* =======================
    START
