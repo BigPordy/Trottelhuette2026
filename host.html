@@ -1,83 +1,92 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hitster – Host‑Modus</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hitster – Host‑Modus</title>
 
-<!-- ✅ Supabase Client -->
-https://unpkg.com/@supabase/supabase-js@2>
+  <!-- =======================================================
+       SUPABASE CLIENT (BEGINN)
+       ======================================================= -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- =======================================================
+       SUPABASE CLIENT (ENDE)
+       ======================================================= -->
 
-<style>
-body {
-  margin: 0;
-  padding: 1rem;
-  font-family: system-ui, sans-serif;
-  background: #020617;
-  color: white;
-}
+  <style>
+    body {
+      margin: 0;
+      padding: 1rem;
+      font-family: system-ui, sans-serif;
+      background: #020617;
+      color: white;
+    }
 
-h1, h2 {
-  margin-top: 0.5rem;
-}
+    h1, h2 {
+      margin-top: 0.5rem;
+    }
 
-.section {
-  background: #1f2937;
-  border-radius: 14px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
+    .section {
+      background: #1f2937;
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
 
-.nav {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
 
-button {
-  padding: 0.4rem 1rem;
-  border-radius: 999px;
-  border: none;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
+    button {
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
 
-select {
-  padding: 0.3rem;
-  border-radius: 6px;
-  border: none;
-}
+    select {
+      padding: 0.3rem;
+      border-radius: 6px;
+      border: none;
+    }
 
-.team {
-  border-top: 1px solid #334155;
-  padding-top: 0.5rem;
-  margin-top: 0.5rem;
-}
+    .team {
+      border-top: 1px solid #334155;
+      padding-top: 0.5rem;
+      margin-top: 0.5rem;
+    }
 
-.answer {
-  margin-left: 1rem;
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
+    .answer {
+      margin-left: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.95;
+    }
 
-.score {
-  font-weight: bold;
-}
+    .hint {
+      font-size: 0.8rem;
+      opacity: 0.75;
+      margin-top: 0.25rem;
+    }
 
-.checkbox {
-  margin-right: 0.4rem;
-}
-</style>
+    .score {
+      font-weight: bold;
+    }
+
+    .checkbox {
+      margin-right: 0.4rem;
+    }
+  </style>
 </head>
 
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
-<div style="font-size:0.8rem;opacity:0.7;margin-bottom:0.5rem">
-  🟢 Live verbunden (Realtime)
-</div>
+<div class="hint">🟢 Live verbunden (Realtime)</div>
 
 <div class="section">
   <h2>Navigation</h2>
@@ -100,12 +109,17 @@ select {
 </div>
 
 <script>
-/* ✅ Supabase */
+/* ==========================================================
+   SUPABASE INITIALISIERUNG
+   ========================================================== */
 const supabase = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 
+/* ==========================================================
+   GRUNDKONFIGURATION
+   ========================================================== */
 const songCounts = { 1: 15, 2: 16 };
 
 let round = 1;
@@ -114,21 +128,80 @@ let teams = [];
 let answers = [];
 let scores = {};
 
-/* ✅ ZENTRALES DATEN-REFRESH */
+/* ==========================================================
+   PHASE C – RECHTSCHREIB-TOLERANZ (BEGINN)
+   ========================================================== */
+
+/* Text vereinheitlichen */
+function normalizeText(str) {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* Sehr einfache Ähnlichkeitsberechnung */
+function similarity(a, b) {
+  if (!a || !b) return 0;
+  let matches = 0;
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    if (a[i] === b[i]) matches++;
+  }
+  return matches / Math.max(a.length, b.length);
+}
+
+function similarityLabel(score) {
+  if (score >= 0.85) return "✅ wahrscheinlich richtig";
+  if (score >= 0.70) return "❓ Grenzfall";
+  return "❌ eher falsch";
+}
+
+/* Korrekte Lösungen – Runde 2 */
+const correctSolutions = {
+  2: {
+    1: "forrest gump",
+    2: "8 mile",
+    3: "amelie",
+    4: "harry potter",
+    5: "the godfather",
+    6: "fight club",
+    7: "intouchables",
+    8: "interstellar",
+    9: "schindlers liste",
+    10: "inception",
+    11: "the office",
+    12: "requiem for a dream",
+    13: "chariots of fire",
+    14: "batman begins",
+    15: "barbie",
+    16: "sherlock holmes"
+  }
+};
+
+/* ==========================================================
+   PHASE C – RECHTSCHREIB-TOLERANZ (ENDE)
+   ========================================================== */
+
+/* ==========================================================
+   DATENLADEN + REALTIME
+   ========================================================== */
 async function refreshData() {
-  const { data: teamsData } = await supabase.from("teams").select("*");
-  const { data: answersData } = await supabase.from("answers").select("*");
-
-  teams = teamsData || [];
-  answers = answersData || [];
-
+  const { data: t } = await supabase.from("teams").select("*");
+  const { data: a } = await supabase.from("answers").select("*");
+  teams = t || [];
+  answers = a || [];
   render();
 }
 
-/* ✅ REALTIME */
 function subscribeRealtime() {
   supabase
-    .channel("host-live")
+    .channel("host-realtime")
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "answers" },
@@ -142,15 +215,9 @@ function subscribeRealtime() {
     .subscribe();
 }
 
-/* ✅ INIT */
-async function initHost() {
-  await refreshData();
-  subscribeRealtime();
-  setRound(1);
-}
-
-/* === AB HIER: DEIN CODE UNVERÄNDERT === */
-
+/* ==========================================================
+   UI LOGIK
+   ========================================================== */
 function setRound(r) {
   round = r;
   const sel = document.getElementById("songSelect");
@@ -173,7 +240,6 @@ function render() {
 
   teams.forEach(team => {
     scores[team.id] = 0;
-
     const div = document.createElement("div");
     div.className = "team";
     div.innerHTML = `<h3>${team.name}</h3>`;
@@ -190,7 +256,22 @@ function render() {
       return;
     }
 
-    if (round === 1) {
+    if (round === 2) {
+      const user = normalizeText(ans.movie);
+      const correct = normalizeText(correctSolutions[2][song]);
+      const score = similarity(user, correct);
+
+      div.innerHTML += `
+        <div class="answer">
+          ${ans.movie}
+          <div class="hint">${similarityLabel(score)} (Score ${score.toFixed(2)})</div>
+        </div>
+        <label>
+          <input class="checkbox" type="checkbox" onchange="updateScore('${team.id}', 2)">
+          richtig
+        </label>
+      `;
+    } else {
       div.innerHTML += `
         <div class="answer">
           ${ans.artist || "-"} – ${ans.title || "-"}
@@ -199,13 +280,7 @@ function render() {
         <label><input class="checkbox" type="checkbox" onchange="updateScore('${team.id}',1)"> Titel</label>
         <label><input class="checkbox" type="checkbox" onchange="updateScore('${team.id}',1)"> Bonus</label>
       `;
-    } else {
-      div.innerHTML += `
-        <div class="answer">${ans.movie || "-"}</div>
-        <label><input class="checkbox" type="checkbox" onchange="updateScore('${team.id}',2)"> richtig</label>
-      `;
     }
-
     container.appendChild(div);
   });
 
@@ -213,14 +288,13 @@ function render() {
 }
 
 function updateScore(teamId, add) {
-  scores[teamId] += add === 1 ? 1 : 2;
+  scores[teamId] += add;
   renderLeaderboard();
 }
 
 function renderLeaderboard() {
   const lb = document.getElementById("leaderboard");
   lb.innerHTML = "";
-
   teams
     .map(t => ({ name: t.name, score: scores[t.id] || 0 }))
     .sort((a,b)=>b.score-a.score)
@@ -229,8 +303,11 @@ function renderLeaderboard() {
     });
 }
 
-/* START */
-initHost();
+/* ==========================================================
+   START
+   ========================================================== */
+refreshData().then(subscribeRealtime);
+setRound(1);
 </script>
 
 </body>
