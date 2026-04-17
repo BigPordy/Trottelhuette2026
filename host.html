@@ -25,12 +25,7 @@
     }
 
     h1 { margin-bottom: 0.25rem; }
-    h2 { margin-top: 0; }
-
-    .hint {
-      opacity: 0.7;
-      margin-bottom: 1rem;
-    }
+    .hint { opacity: 0.7; margin-bottom: 1rem; }
 
     .section {
       background: #1f2937;
@@ -57,9 +52,7 @@
       font-size: 0.95rem;
     }
 
-    button.secondary {
-      background: #475569;
-    }
+    button.secondary { background: #475569; }
 
     select {
       padding: 0.35rem;
@@ -67,6 +60,26 @@
       border: none;
       font-size: 0.95rem;
     }
+
+    /* =======================
+       HEADER ROW
+       BEGIN
+       ======================= */
+    .header-row {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      column-gap: 2.5rem;
+      padding-bottom: 0.6rem;
+      margin-bottom: 0.6rem;
+      border-bottom: 3px solid #64748b;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+    }
+    /* =======================
+       HEADER ROW
+       ENDE
+       ======================= */
 
     /* =======================
        TEAM / ANSWER LAYOUT
@@ -77,7 +90,7 @@
       grid-template-columns: 360px 1fr;
       column-gap: 2.5rem;
       align-items: center;
-      border-top: 1px solid #334155;
+      border-top: 3px solid #475569;   /* dickere horizontale Linie */
       padding: 0.9rem 0;
     }
 
@@ -89,9 +102,12 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-right: 1.5rem;
+      border-right: 3px solid #64748b; /* vertikale Trennlinie */
     }
 
     .answer {
+      padding-left: 1.5rem;
       font-size: 1.2rem;
     }
 
@@ -117,7 +133,7 @@
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">Runde 1: <b>Hitster – Klassik</b> · Lösung anzeigen → Grün / Gelb / Rot</div>
+<div class="hint">Runde 1: Hitster – Klassik · Runde 2: Filmmusik</div>
 
 <!-- =======================
      NAVIGATION
@@ -142,45 +158,28 @@
 <div id="solutionBox" class="solution" style="display:none;"></div>
 
 <div class="section">
-  <h2>Antworten</h2>
+  <div class="header-row">
+    <div>TEAM</div>
+    <div>ANTWORT</div>
+  </div>
   <div id="answersContainer"></div>
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* =======================
-     SUPABASE CLIENT
-     BEGIN
-     ======================= */
   const supabaseClient = window.supabase.createClient(
     "https://havaoqxnxnlmyfbldyic.supabase.co",
     "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
   );
-  /* =======================
-     SUPABASE CLIENT
-     ENDE
-     ======================= */
 
-  /* =======================
-     STATE
-     BEGIN
-     ======================= */
   const songCounts = { 1: 15, 2: 16 };
   let round = 1;
   let song = 1;
   let teams = [];
   let answers = [];
   let solutionVisible = false;
-  /* =======================
-     STATE
-     ENDE
-     ======================= */
 
-  /* =======================
-     HILFSFUNKTIONEN
-     BEGIN
-     ======================= */
   const normalize = s =>
     (s || "")
       .toLowerCase()
@@ -201,37 +200,33 @@ document.addEventListener("DOMContentLoaded", () => {
     if (score >= 0.6)  return "partial";
     return "wrong";
   }
-  /* =======================
-     HILFSFUNKTIONEN
-     ENDE
-     ======================= */
 
   /* =======================
-     EXPLIZITE LÖSUNGEN
-     RUNDE 1 – HITSTER KLASSIK
+     LÖSUNGEN RUNDE 2
      BEGIN
      ======================= */
   const solutions = {
-    1: {
-      1: { composer:["ludwig van beethoven"], title:["fur elise","fuer elise"], display:"Ludwig van Beethoven – Für Elise" },
-      2: { composer:["antonio vivaldi"], title:["der fruhling","fruhling","la primavera"], display:"Antonio Vivaldi – Der Frühling" },
-      3: { composer:["wolfgang amadeus mozart"], title:["hochzeit des figaro","overture"], display:"W. A. Mozart – Hochzeit des Figaro (Ouvertüre)" },
-      4: { composer:["giuseppe verdi"], title:["la donna e mobile","donna e mobile"], display:"Giuseppe Verdi – La donna è mobile" },
-      5: { composer:["pjotr iljitsch tschaikowski"], title:["schwanensee"], display:"Tschaikowski – Schwanensee" },
-      6: { composer:["richard wagner"], title:["ritt der walkuren"], display:"Richard Wagner – Ritt der Walküren" },
-      7: { composer:["ludwig van beethoven"], title:["5 symphonie","schicksalssymphonie"], display:"Beethoven – 5. Symphonie" },
-      8: { composer:["johann sebastian bach"], title:["air"], display:"J. S. Bach – Air" },
-      9: { composer:["wolfgang amadeus mozart"], title:["eine kleine nachtmusik"], display:"Mozart – Eine kleine Nachtmusik" },
-      10:{ composer:["johann pachelbel"], title:["kanon","kanon in d"], display:"Pachelbel – Kanon in D" },
-      11:{ composer:["wolfgang amadeus mozart"], title:["rondo alla turca","turkischer marsch"], display:"Mozart – Rondo alla Turca" },
-      12:{ composer:["carl orff"], title:["o fortuna","carmina burana"], display:"Carl Orff – O Fortuna" },
-      13:{ composer:["georges bizet"], title:["carmen"], display:"Georges Bizet – Carmen" },
-      14:{ composer:["edvard grieg"], title:["morgenstimmung"], display:"Edvard Grieg – Morgenstimmung" },
-      15:{ composer:["johann strauss"], title:["an der schonen blauen donau"], display:"Johann Strauss II – An der schönen blauen Donau" }
+    2: {
+      1: ["forrest gump"],
+      2: ["8 mile","eight mile"],
+      3: ["amelie","fabelhafte welt der amelie"],
+      4: ["harry potter","hedwigs theme"],
+      5: ["godfather","pate"],
+      6: ["fight club"],
+      7: ["ziemlich beste freunde"],
+      8: ["interstellar"],
+      9: ["schindlers liste"],
+      10: ["inception"],
+      11: ["the office"],
+      12: ["requiem for a dream"],
+      13: ["chariots of fire","stunde des siegers"],
+      14: ["batman begins"],
+      15: ["barbie"],
+      16: ["sherlock holmes"]
     }
   };
   /* =======================
-     EXPLIZITE LÖSUNGEN
+     LÖSUNGEN RUNDE 2
      ENDE
      ======================= */
 
@@ -266,32 +261,23 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!ans) {
         row.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
       } else if (!solutionVisible) {
-        row.innerHTML += `<div class="answer">${ans.artist} – ${ans.title}</div>`;
+        row.innerHTML += `<div class="answer">${ans.movie || ""}</div>`;
       } else {
-        const sol = solutions[round][song];
-        const compScore = Math.max(...sol.composer.map(c => similarity(normalize(ans.artist), normalize(c))));
-        const titleScore = Math.max(...sol.title.map(t => similarity(normalize(ans.title), normalize(t))));
-        const cls = classify(Math.max(compScore, titleScore));
-        row.innerHTML += `<div class="answer ${cls}">${ans.artist} – ${ans.title}</div>`;
+        const solList = solutions[round]?.[song] || [];
+        const score = Math.max(...solList.map(s => similarity(normalize(ans.movie), normalize(s))));
+        const cls = classify(score);
+        row.innerHTML += `<div class="answer ${cls}">${ans.movie}</div>`;
       }
+
       container.appendChild(row);
     });
   }
 
-  document.getElementById("round1Btn").onclick = () => {
-    round = 1;
+  document.getElementById("round2Btn").onclick = () => {
+    round = 2;
     solutionVisible = false;
     document.getElementById("solutionBox").style.display = "none";
     populateSongs();
-    render();
-  };
-
-  document.getElementById("solutionBtn").onclick = () => {
-    const sol = solutions[round][song];
-    if (!sol) return;
-    document.getElementById("solutionBox").textContent = "Lösung: " + sol.display;
-    document.getElementById("solutionBox").style.display = "block";
-    solutionVisible = true;
     render();
   };
 
@@ -299,6 +285,12 @@ document.addEventListener("DOMContentLoaded", () => {
     song = Number(e.target.value);
     solutionVisible = false;
     document.getElementById("solutionBox").style.display = "none";
+    render();
+  };
+
+  document.getElementById("solutionBtn").onclick = () => {
+    document.getElementById("solutionBox").style.display = "none";
+    solutionVisible = true;
     render();
   };
 
