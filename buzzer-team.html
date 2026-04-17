@@ -3,19 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <title>Buzzer – Team</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<h1>Buzzer‑Runde</h1>
+<h1>🔊 Buzzer‑Runde</h1>
 
-<div>
-  <p>Team auswählen:</p>
-  <select>
-    <option>Team A</option>
-    <option>Team B</option>
-  </select>
-  <button>Team bestätigen</button>
+<div id="selectTeam">
+  <p>Wählt euer Team:</p>
+  <select id="teamSelect"></select>
+  <br><br>
+  <button id="confirmTeam" disabled>Team bestätigen</button>
 </div>
+
+<div id="buzzArea" style="display:none;">
+  <h2>Bereit zum Buzzern</h2>
+  <button id="buzzButton">🔔 BUZZ!</button>
+</div>
+
+<script>
+const db = window.supabase.createClient(
+  "https://havaoqxnxnlmyfbldyic.supabase.co",
+  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+);
+
+const teamSelect = document.getElementById("teamSelect");
+const confirmTeam = document.getElementById("confirmTeam");
+const selectTeamDiv = document.getElementById("selectTeam");
+const buzzArea = document.getElementById("buzzArea");
+
+async function loadTeams() {
+  const { data } = await db.from("teams").select("id, name").order("created_at");
+  data.forEach(team => {
+    const opt = document.createElement("option");
+    opt.value = team.id;
+    opt.textContent = team.name;
+    teamSelect.appendChild(opt);
+  });
+}
+
+teamSelect.onchange = () => {
+  confirmTeam.disabled = !teamSelect.value;
+};
+
+confirmTeam.onclick = () => {
+  sessionStorage.setItem("teamId", teamSelect.value);
+  selectTeamDiv.style.display = "none";
+  buzzArea.style.display = "block";
+};
+
+loadTeams();
+</script>
 
 </body>
 </html>
