@@ -31,7 +31,7 @@
     .answer.hint{opacity:.6;font-style:italic}
 
     .team.correct{background:#14532d}
-    .team.partial{background:#713f12;cursor:pointer}
+    .team.partial{background:#713f12}
     .team.wrong{background:#7f1d1d}
 
     .solution{font-size:1.7rem;font-weight:800;text-align:center;margin:1rem 0;color:#22c55e}
@@ -76,179 +76,235 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded",async()=>{
 
-  /* DOM */
-  const r1 = document.getElementById("r1");
-  const r2 = document.getElementById("r2");
-  const songSelect = document.getElementById("songSelect");
-  const showAnswers = document.getElementById("showAnswers");
-  const showSolution = document.getElementById("showSolution");
-  const showScore = document.getElementById("showScore");
-  const back = document.getElementById("back");
-  const saveGame = document.getElementById("saveGame");
-  const resetScores = document.getElementById("resetScores");
+/* DOM */
+const r1 = document.getElementById("r1");
+const r2 = document.getElementById("r2");
+const songSelect = document.getElementById("songSelect");
+const showAnswers = document.getElementById("showAnswers");
+const showSolution = document.getElementById("showSolution");
+const showScore = document.getElementById("showScore");
+const back = document.getElementById("back");
+const resetScores = document.getElementById("resetScores");
+const roundView = document.getElementById("roundView");
+const scoreView = document.getElementById("scoreView");
+const answersEl = document.getElementById("answers");
+const solutionBox = document.getElementById("solutionBox");
+const scoreboard = document.getElementById("scoreboard");
 
-  const roundView = document.getElementById("roundView");
-  const scoreView = document.getElementById("scoreView");
-  const answersEl = document.getElementById("answers");
-  const solutionBox = document.getElementById("solutionBox");
-  const scoreboard = document.getElementById("scoreboard");
+/* Supabase */
+const db = window.supabase.createClient(
+  "https://havaoqxnxnlmyfbldyic.supabase.co",
+  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+);
 
-  /* Supabase */
-  const db = window.supabase.createClient(
-    "https://havaoqxnxnlmyfbldyic.supabase.co",
-    "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+/* State */
+const songCounts={1:15,2:16};
+let round=1, song=1;
+let teams=[], answers=[], scores={};
+let answersVisible=false;
+
+/* Utils */
+const norm=s=>(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+const sim=(a,b)=>{let m=0;for(let i=0;i<Math.min(a.length,b.length);i++)if(a[i]===b[i])m++;return m/Math.max(a.length,b.length);};
+const clsR1=(c,t)=>c>=.85&&t>=.85?["correct",3]:c>=.6||t>=.6?["partial",1]:["wrong",0];
+const clsR2=s=>s>=.8?["correct",2]:["wrong",0];
+
+/* Lösungen */
+const solutions = {
+  1:{
+    1:{disp:"Ludwig van Beethoven – Für Elise",c:["beethoven"],t:["fur elise","fuer elise"]},
+    2:{disp:"Antonio Vivaldi – Der Frühling",c:["vivaldi"],t:["fruhling","la primavera"]},
+    3:{disp:"Mozart – Hochzeit des Figaro",c:["mozart"],t:["hochzeit des figaro"]},
+    4:{disp:"Giuseppe Verdi – La donna è mobile",c:["verdi"],t:["la donna e mobile"]},
+    5:{disp:"Tschaikowski – Schwanensee",c:["tschaikowski"],t:["schwanensee"]},
+    6:{disp:"Richard Wagner – Ritt der Walküren",c:["wagner"],t:["ritt der walkuren"]},
+    7:{disp:"Beethoven – 5. Symphonie",c:["beethoven"],t:["5 symphonie","schicksalssymphonie"]},
+    8:{disp:"J. S. Bach – Air",c:["bach"],t:["air"]},
+    9:{disp:"Mozart – Eine kleine Nachtmusik",c:["mozart"],t:["eine kleine nachtmusik"]},
+    10:{disp:"Pachelbel – Kanon in D",c:["pachelbel"],t:["kanon"]},
+    11:{disp:"Mozart – Rondo alla Turca",c:["mozart"],t:["rondo alla turca"]},
+    12:{disp:"Carl Orff – O Fortuna",c:["orff"],t:["o fortuna"]},
+    13:{disp:"Bizet – Carmen",c:["bizet"],t:["carmen"]},
+    14:{disp:"Edvard Grieg – Morgenstimmung",c:["grieg"],t:["morgenstimmung"]},
+    15:{disp:"Johann Strauss II – An der schönen blauen Donau",c:["strauss"],t:["an der schonen blauen donau"]}
+  },
+  2:{
+    1:{disp:"Forrest Gump",m:["forrest gump"]},
+    2:{disp:"8 Mile",m:["8 mile","eight mile"]},
+    3:{disp:"Die fabelhafte Welt der Amélie",m:["amelie"]},
+    4:{disp:"Harry Potter – Hedwig’s Theme",m:["harry potter","hedwig"]},
+    5:{disp:"The Godfather",m:["godfather","pate"]},
+    6:{disp:"Fight Club",m:["fight club"]},
+    7:{disp:"Ziemlich beste Freunde",m:["ziemlich beste freunde"]},
+    8:{disp:"Interstellar",m:["interstellar"]},
+    9:{disp:"Schindlers Liste",m:["schindlers liste"]},
+    10:{disp:"Inception",m:["inception"]},
+    11:{disp:"The Office",m:["the office"]},
+    12:{disp:"Requiem for a Dream",m:["requiem for a dream"]},
+    13:{disp:"Chariots of Fire",m:["chariots","stunde des siegers"]},
+    14:{disp:"Batman Begins",m:["batman begins"]},
+    15:{disp:"Barbie",m:["barbie"]},
+    16:{disp:"Sherlock Holmes",m:["sherlock holmes"]}
+  }
+};
+
+/* Load */
+teams = (await db.from("teams").select("*").order("created_at")).data || [];
+answers = (await db.from("answers").select("*")).data || [];
+
+/* Scores aus DB laden */
+const scoreRes = await db.from("team_scores").select("*");
+const scoreMap = {};
+
+/* team_id -> score mappen */
+(scoreRes.data || []).forEach(r => {
+  scoreMap[r.team_id] = r.score;
+});
+
+/* Lokale Scores setzen */
+teams.forEach(t => {
+  scores[t.id] = scoreMap[t.id] ?? 0;
+});
+``
+
+/* UI */
+function populateSongs(){
+  songSelect.innerHTML="";
+  for(let i=1;i<=songCounts[round];i++) songSelect.innerHTML+=`<option value="${i}">Song ${i}</option>`;
+  song=1;
+}
+function render(){
+  answersEl.innerHTML="";
+  teams.forEach(t=>{
+    const row=document.createElement("div");
+    row.id=`team-${t.id}`;
+    row.className="team";
+    row.innerHTML=`<div class="team-name">${t.name}</div>`;
+    const a=answers.find(x=>x.team_id===t.id&&x.round===round&&x.song===song);
+    if(!answersVisible) row.innerHTML+=`<div class="answer hint"></div>`;
+    else if(!a) row.innerHTML+=`<div class="answer hint">Keine Antwort</div>`;
+    else row.innerHTML+=`<div class="answer">${round===1?`${a.artist} – ${a.title}`:a.movie}</div>`;
+    answersEl.appendChild(row);
+  });
+}
+function showSol(){
+  solutionBox.textContent=solutions[round][song].disp;
+  solutionBox.classList.remove("hidden");
+  teams.forEach(t=>{
+    const a=answers.find(x=>x.team_id===t.id&&x.round===round&&x.song===song);
+    if(!a) return;
+    let r;
+    if(round===1){
+      const s=solutions[1][song];
+      r=clsR1(
+        Math.max(...s.c.map(v=>sim(norm(a.artist),norm(v)))),
+        Math.max(...s.t.map(v=>sim(norm(a.title),norm(v))))
+      );
+    } else {
+      const s=solutions[2][song];
+      r=clsR2(Math.max(...s.m.map(v=>sim(norm(a.movie),norm(v)))));
+    }
+    scores[t.id]+=r[1];
+    document.getElementById(`team-${t.id}`).classList.add(r[0]);
+    const row = document.getElementById(`team-${t.id}`);
+row.dataset.teamId = t.id;
+row.dataset.result = r[0]; // "correct" | "partial" | "wrong"
+row.dataset.pointsGiven = r[1]; // gemerkte Punkte (1 oder 3 / 2)
+  });
+  answersEl.onclick = (e) => {
+  const row = e.target.closest(".team");
+  if (!row) return;
+
+  if (row.dataset.result !== "partial") return;
+
+  const teamId = Number(row.dataset.teamId);
+  const alreadyGiven = Number(row.dataset.pointsGiven);
+
+  const choice = prompt(
+    "Antwort umbewerten:\n" +
+    "g = richtig (voll)\n" +
+    "r = falsch (0 Punkte)",
+    "g"
   );
 
-  /* State */
-  const songCounts = {1:15, 2:16};
-  let round = 1, song = 1;
-  let teams = [], answers = [], scores = {};
-  let answersVisible = false;
-  let evaluatedSongs = {}; // ✅ verhindert Doppelwertung
+  if (!choice) return;
 
-  /* Utils */
-  const norm = s => (s||"").toLowerCase().normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/[^a-z0-9]/g,"");
+  if (choice === "g") {
+    const targetPoints = (round === 1 ? 3 : 2);
+    scores[teamId] += (targetPoints - alreadyGiven);
 
-  const sim = (a,b) => {
-    let m=0;
-    for(let i=0;i<Math.min(a.length,b.length);i++)
-      if(a[i]===b[i]) m++;
-    return m/Math.max(a.length,b.length);
-  };
-
-  const clsR1 = (c,t) =>
-    c>=.85 && t>=.85 ? ["correct",3] :
-    c>=.6  || t>=.6  ? ["partial",1] :
-                       ["wrong",0];
-
-  const clsR2 = s => s>=.8 ? ["correct",2] : ["wrong",0];
-
-  /* Lösungen – UNVERÄNDERT */
-  const solutions = /** exakt dein kompletter solutions‑Block **/ (/* … hier bleibt dein ganzer Block unverändert … */);
-
-  /* Load */
-  teams   = (await db.from("teams").select("*").order("created_at")).data || [];
-  answers = (await db.from("answers").select("*")).data || [];
-
-  const scoreRes = await db.from("team_scores").select("*");
-  const scoreMap = {};
-  (scoreRes.data || []).forEach(r => scoreMap[r.team_id] = r.score);
-  teams.forEach(t => scores[t.id] = scoreMap[t.id] ?? 0);
-
-  /* UI */
-  function populateSongs(){
-    songSelect.innerHTML="";
-    for(let i=1;i<=songCounts[round];i++)
-      songSelect.innerHTML += `<option value="${i}">Song ${i}</option>`;
-    song = 1;
-  }
-
-  function render(){
-    answersEl.innerHTML="";
-    teams.forEach(t=>{
-      const row=document.createElement("div");
-      row.id=`team-${t.id}`;
-      row.className="team";
-      row.innerHTML=`<div class="team-name">${t.name}</div>`;
-      const a=answers.find(x=>x.team_id===t.id && x.round===round && x.song===song);
-
-      if(!answersVisible) row.innerHTML+=`<div class="answer hint"></div>`;
-      else if(!a) row.innerHTML+=`<div class="answer hint">Keine Antwort</div>`;
-      else row.innerHTML+=`<div class="answer">${round===1?`${a.artist} – ${a.title}`:a.movie}</div>`;
-
-      answersEl.appendChild(row);
-    });
-  }
-
-  function showSol(){
-    const key = `${round}-${song}`;
-    if(evaluatedSongs[key]) return alert("Dieser Song wurde bereits gewertet.");
-
-    solutionBox.textContent = solutions[round][song].disp;
-    solutionBox.classList.remove("hidden");
-
-    teams.forEach(t=>{
-      const a=answers.find(x=>x.team_id===t.id&&x.round===round&&x.song===song);
-      if(!a) return;
-      let r;
-      if(round===1){
-        const s=solutions[1][song];
-        r=clsR1(
-          Math.max(...s.c.map(v=>sim(norm(a.artist),norm(v)))),
-          Math.max(...s.t.map(v=>sim(norm(a.title),norm(v))))
-        );
-      } else {
-        const s=solutions[2][song];
-        r=clsR2(Math.max(...s.m.map(v=>sim(norm(a.movie),norm(v)))));
-      }
-      scores[t.id]+=r[1];
-      const row=document.getElementById(`team-${t.id}`);
-      row.classList.add(r[0]);
-      row.dataset.result=r[0];
-      row.dataset.teamId=t.id;
-    });
-
-    evaluatedSongs[key] = true;
-  }
-
-  /* Gelb → Grün Override */
-  answersEl.onclick = e => {
-    const row=e.target.closest(".team");
-    if(!row || row.dataset.result!=="partial") return;
-    if(!confirm("Diese Antwort als RICHTIG werten?")) return;
-    const teamId = Number(row.dataset.teamId);
-    scores[teamId] += (round===1 ? 2 : 1);
     row.classList.remove("partial");
     row.classList.add("correct");
-    row.dataset.result="correct";
-  };
-
-  function leaderboard(){
-    solutionBox.classList.add("hidden");
-    roundView.classList.add("hidden");
-    scoreView.classList.remove("hidden");
-    scoreboard.innerHTML="";
-    [...teams].sort((a,b)=>scores[b.id]-scores[a.id]).forEach((t,i,arr)=>{
-      const div=document.createElement("div");
-      div.className="row"+(i===arr.length-1?" gold":"");
-      div.innerHTML=`<span>${i+1}. ${t.name}</span><span>${i===arr.length-1?"Dummenpärchen 2026 🏆 ":""}${scores[t.id]} Punkte</span>`;
-      scoreboard.appendChild(div);
-    });
+    row.dataset.result = "correct";
+    row.dataset.pointsGiven = targetPoints;
   }
 
-  /* Events */
-  r1.onclick=()=>{round=1;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");r1.classList.add("active");r2.classList.remove("active");render();};
-  r2.onclick=()=>{round=2;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");r2.classList.add("active");r1.classList.remove("active");render();};
-  songSelect.onchange=()=>{song=Number(songSelect.value);answersVisible=false;solutionBox.classList.add("hidden");render();};
-  showAnswers.onclick=()=>{answersVisible=true;render();};
-  showSolution.onclick=showSol;
-  showScore.onclick=leaderboard;
-  back.onclick=()=>{scoreView.classList.add("hidden");roundView.classList.remove("hidden");solutionBox.classList.add("hidden");};
+  if (choice === "r") {
+    scores[teamId] -= alreadyGiven;
 
-  saveGame.onclick=async()=>{
-    const payload=Object.entries(scores).map(([team_id,score])=>({
-      team_id:Number(team_id),
-      score,
-      updated_at:new Date().toISOString()
-    }));
-    await db.from("team_scores").upsert(payload);
-    alert("✅ Spielstand gespeichert");
-  };
+    row.classList.remove("partial");
+    row.classList.add("wrong");
+    row.dataset.result = "wrong";
+    row.dataset.pointsGiven = 0;
+  }
+};
+}
+function leaderboard(){
+  solutionBox.classList.add("hidden");
+  roundView.classList.add("hidden");
+  scoreView.classList.remove("hidden");
+  scoreboard.innerHTML="";
+  [...teams].sort((a,b)=>scores[b.id]-scores[a.id]).forEach((t,i,arr)=>{
+    const div=document.createElement("div");
+    div.className="row"+(i===arr.length-1?" gold":"");
+    div.innerHTML=`<span>${i+1}. ${t.name}</span><span>${i===arr.length-1?"Dummenpärchen 2026 🏆 ":""}${scores[t.id]} Punkte</span>`;
+    scoreboard.appendChild(div);
+  });
+}
 
-  resetScores.onclick=async()=>{
-    if(!confirm("Wirklich ALLE Punktestände zurücksetzen?")) return;
-    teams.forEach(t=>scores[t.id]=0);
-    evaluatedSongs={};
-    await db.from("team_scores").delete().neq("team_id",0);
-    render();
-  };
+/* Events */
+r1.onclick=()=>{round=1;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");r1.classList.add("active");r2.classList.remove("active");render();};
+r2.onclick=()=>{round=2;populateSongs();answersVisible=false;solutionBox.classList.add("hidden");r2.classList.add("active");r1.classList.remove("active");render();};
+songSelect.onchange=()=>{song=Number(songSelect.value);answersVisible=false;solutionBox.classList.add("hidden");render();};
+showAnswers.onclick=()=>{answersVisible=true;render();};
+showSolution.onclick=showSol;
+showScore.onclick=leaderboard;
+back.onclick=()=>{
+  scoreView.classList.add("hidden"); 
+  roundView.classList.remove("hidden"); 
+  solutionBox.classList.add("hidden");
+resetScores.onclick = async () => {
+  if (!confirm("Wirklich ALLE Punktestände zurücksetzen?")) return;
 
-  populateSongs();
+  teams.forEach(t => scores[t.id] = 0);
+  evaluatedSongs = {};
+
+  await db.from("team_scores").delete().neq("team_id", 0);
+
   render();
+};
+
+const saveGame = document.getElementById("saveGame");
+
+saveGame.onclick = async () => {
+  console.log("SAVE BUTTON CLICKED", scores);
+
+  const payload = Object.entries(scores).map(([team_id, score]) => ({
+    team_id: Number(team_id),
+    score,
+    updated_at: new Date().toISOString()
+  }));
+
+  await db.from("team_scores").upsert(payload);
+
+  alert("✅ Spielstand gespeichert – ihr könnt später exakt hier weitermachen.");
+};
+
+/* Start */
+populateSongs();
+render();
 
 });
 </script>
