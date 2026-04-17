@@ -1,76 +1,99 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hitster – Host‑Modus</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hitster – Host‑Modus</title>
 
-<!-- =======================
-     SUPABASE CLIENT
-     BEGIN
-     ======================= -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<!-- =======================
-     SUPABASE CLIENT
-     ENDE
-     ======================= -->
+  <!-- =======================
+       SUPABASE CLIENT
+       BEGIN
+       ======================= -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- =======================
+       SUPABASE CLIENT
+       ENDE
+       ======================= -->
 
-<style>
-body {
-  margin: 0;
-  padding: 1rem;
-  font-family: system-ui, sans-serif;
-  background: #020617;
-  color: white;
-}
+  <style>
+    body {
+      margin: 0;
+      padding: 1rem;
+      font-family: system-ui, sans-serif;
+      background: #020617;
+      color: white;
+    }
 
-.section {
-  background: #1f2937;
-  border-radius: 14px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
+    h1, h2 {
+      margin-top: 0.5rem;
+    }
 
-.nav {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: .75rem;
-}
+    .section {
+      background: #1f2937;
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
 
-button {
-  padding: 0.4rem 1rem;
-  border-radius: 999px;
-  border: none;
-  background: #2563eb;
-  color: white;
-  font-size: .9rem;
-  cursor: pointer;
-}
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
 
-select { padding:.3rem;border-radius:6px }
+    button {
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
 
-.team {
-  border-top:1px solid #334155;
-  padding-top:.75rem;
-  margin-top:.75rem;
-}
+    select {
+      padding: 0.3rem;
+      border-radius: 6px;
+      border: none;
+    }
 
-.team-name { font-weight:bold }
-.answer { margin-left:.5rem; opacity:.9 }
-.hint { font-size:.8rem;opacity:.6 }
-</style>
+    .team {
+      border-top: 1px solid #334155;
+      padding-top: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .team-name {
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+
+    .answer {
+      margin-left: 0.5rem;
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      opacity: 0.6;
+      margin-left: 0.5rem;
+    }
+  </style>
 </head>
 
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
+<div class="hint">E1 – neutrale Antwortanzeige (keine Bewertung)</div>
 
 <div class="section">
+  <h2>Navigation</h2>
   <div class="nav">
-    <button onclick="setRound(1)">🎵 Runde 1</button>
-    <button onclick="setRound(2)">🎬 Runde 2</button>
+    <button onclick="setRound(1)">🎵 Runde 1</button>
+    <button onclick="setRound(2)">🎬 Runde 2</button>
     Song:
     <select id="songSelect" onchange="render()"></select>
   </div>
@@ -95,11 +118,12 @@ const supabase = window.supabase.createClient(
    ENDE
    ======================= */
 
+
 /* =======================
    STATE
    BEGIN
    ======================= */
-const songCounts = {1:15,2:16};
+const songCounts = { 1: 15, 2: 16 };
 let round = 1;
 let song = 1;
 let teams = [];
@@ -109,29 +133,40 @@ let answersData = [];
    ENDE
    ======================= */
 
+
 /* =======================
    DATA + REALTIME
    BEGIN
    ======================= */
-async function refreshData(){
-  teams = (await supabase
+async function refreshData() {
+  const teamsResult = await supabase
     .from("teams")
     .select("*")
-    .order("created_at",{ascending:true})
-  ).data || [];
+    .order("created_at", { ascending: true });
 
-  answersData = (await supabase
+  const answersResult = await supabase
     .from("answers")
-    .select("*")
-  ).data || [];
+    .select("*");
+
+  teams = teamsResult.data || [];
+  answersData = answersResult.data || [];
 
   render();
 }
 
-function subscribeRealtime(){
-  supabase.channel("host-e1-fix")
-    .on("postgres_changes",{event:"*",schema:"public",table:"teams"},refreshData)
-    .on("postgres_changes",{event:"*",schema:"public",table:"answers"},refreshData)
+function subscribeRealtime() {
+  supabase
+    .channel("host-e1")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "teams" },
+      refreshData
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "answers" },
+      refreshData
+    )
     .subscribe();
 }
 /* =======================
@@ -139,28 +174,39 @@ function subscribeRealtime(){
    ENDE
    ======================= */
 
+
 /* =======================
    UI
    BEGIN
    ======================= */
-function setRound(r){
+function setRound(r) {
   round = r;
-  songSelect.innerHTML = "";
-  for(let i=1;i<=songCounts[r];i++){
-    songSelect.innerHTML += `<option value="${i}">Song ${i}</option>`;
+
+  const select = document.getElementById("songSelect");
+  select.innerHTML = "";
+
+  for (let i = 1; i <= songCounts[r]; i++) {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = `Song ${i}`;
+    select.appendChild(opt);
   }
+
   song = 1;
   render();
 }
 
-function render(){
+function render() {
   const container = document.getElementById("answersContainer");
   container.innerHTML = "";
 
-  teams.forEach(team=>{
-    const wrapper = document.createElement("div");
-    wrapper.className = "team";
-    wrapper.innerHTML = `<div class="team-name">${team.name}</div>`;
+  song = Number(document.getElementById("songSelect").value);
+
+  teams.forEach(team => {
+    const block = document.createElement("div");
+    block.className = "team";
+
+    block.innerHTML = `<div class="team-name">${team.name}</div>`;
 
     const ans = answersData.find(a =>
       a.team_id === team.id &&
@@ -168,23 +214,24 @@ function render(){
       a.song === song
     );
 
-    if(ans){
-      if(round === 1){
-        wrapper.innerHTML += `<div class="answer">${ans.artist} – ${ans.title}</div>`;
+    if (ans) {
+      if (round === 1) {
+        block.innerHTML += `<div class="answer">${ans.artist} – ${ans.title}</div>`;
       } else {
-        wrapper.innerHTML += `<div class="answer">${ans.movie}</div>`;
+        block.innerHTML += `<div class="answer">${ans.movie}</div>`;
       }
     } else {
-      wrapper.innerHTML += `<div class="answer hint">Keine Antwort</div>`;
+      block.innerHTML += `<div class="answer hint">Keine Antwort abgegeben</div>`;
     }
 
-    container.appendChild(wrapper);
+    container.appendChild(block);
   });
 }
 /* =======================
    UI
    ENDE
    ======================= */
+
 
 /* =======================
    START
