@@ -37,7 +37,6 @@ button{
   cursor:pointer;
   font-size:.95rem;
 }
-
 button.secondary{background:#475569}
 select{padding:.35rem;border-radius:6px}
 
@@ -60,7 +59,6 @@ select{padding:.35rem;border-radius:6px}
   padding:.9rem 0;
   border-top:3px solid #475569;
 }
-
 .team:first-child{border-top:none}
 
 .team-name{
@@ -78,7 +76,6 @@ select{padding:.35rem;border-radius:6px}
   padding-left:1.5rem;
   font-size:1.15rem;
 }
-
 .answer.hint{opacity:.6;font-style:italic}
 
 .team.correct{background:#14532d}
@@ -98,7 +95,7 @@ select{padding:.35rem;border-radius:6px}
 <body>
 
 <h1>🎤 Hitster – Host‑Modus</h1>
-<div class="hint">Rundeweise Auflösung · Antworten → Lösung → Bewertung</div>
+<div class="hint">Antworten → Lösung → Bewertung</div>
 
 <div class="section">
   <div class="nav">
@@ -126,43 +123,21 @@ select{padding:.35rem;border-radius:6px}
 <script>
 document.addEventListener("DOMContentLoaded",()=>{
 
-const supabaseClient=window.supabase.createClient(
+const supabase = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 
-const songCounts={1:15,2:16};
-let round=1,song=1;
-let teams=[],answers=[];
-let answersVisible=false;
-let solutionVisible=false;
+const songCounts = {1:15,2:16};
+let round=1, song=1;
+let teams=[], answers=[];
+let answersVisible=false, solutionVisible=false;
 
-/* ---------- Lösungen ---------- */
-const solutions={
-  2:{
-    1:["forrest gump"],
-    2:["8 mile","eight mile"],
-    3:["amelie","fabelhafte welt der amelie"],
-    4:["harry potter","hedwigs theme"],
-    5:["godfather","pate"],
-    6:["fight club"],
-    7:["ziemlich beste freunde"],
-    8:["interstellar"],
-    9:["schindlers liste"],
-    10:["inception"],
-    11:["the office"],
-    12:["requiem for a dream"],
-    13:["chariots of fire","stunde des siegers"],
-    14:["batman begins"],
-    15:["barbie"],
-    16:["sherlock holmes"]
-  }
-};
-
+/* ---------- UTIL ---------- */
 const normalize=s=>(s||"")
-  .toLowerCase()
-  .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-  .replace(/[^a-z0-9]/g,"");
+ .toLowerCase()
+ .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+ .replace(/[^a-z0-9]/g,"");
 
 function similarity(a,b){
  if(!a||!b) return 0;
@@ -171,25 +146,55 @@ function similarity(a,b){
   if(a[i]===b[i]) m++;
  return m/Math.max(a.length,b.length);
 }
-
-function classify(score){
- if(score>=0.85) return"correct";
- if(score>=0.6) return"partial";
+function classify(s){
+ if(s>=0.85) return"correct";
+ if(s>=0.6) return"partial";
  return"wrong";
 }
 
-/* ---------- Daten ---------- */
-async function refreshData(){
- teams=(await supabaseClient.from("teams").select("*").order("created_at")).data||[];
- answers=(await supabaseClient.from("answers").select("*")).data||[];
- render();
-}
+/* ---------- SOLUTIONS ---------- */
+const solutions = {
+  1:{ // Runde 1 – Klassik
+    1:{display:"Ludwig van Beethoven – Für Elise",composer:["beethoven"],title:["fur elise","fuer elise"]},
+    2:{display:"Antonio Vivaldi – Der Frühling",composer:["vivaldi"],title:["fruhling","la primavera"]},
+    3:{display:"W. A. Mozart – Hochzeit des Figaro",composer:["mozart"],title:["hochzeit des figaro"]},
+    4:{display:"Giuseppe Verdi – La donna è mobile",composer:["verdi"],title:["la donna e mobile"]},
+    5:{display:"Tschaikowski – Schwanensee",composer:["tschaikowski"],title:["schwanensee"]},
+    6:{display:"Richard Wagner – Ritt der Walküren",composer:["wagner"],title:["ritt der walkuren"]},
+    7:{display:"Beethoven – 5. Symphonie",composer:["beethoven"],title:["5 symphonie","schicksalssymphonie"]},
+    8:{display:"J. S. Bach – Air",composer:["bach"],title:["air"]},
+    9:{display:"Mozart – Eine kleine Nachtmusik",composer:["mozart"],title:["eine kleine nachtmusik"]},
+    10:{display:"Pachelbel – Kanon in D",composer:["pachelbel"],title:["kanon"]},
+    11:{display:"Mozart – Rondo alla Turca",composer:["mozart"],title:["rondo alla turca"]},
+    12:{display:"Carl Orff – O Fortuna",composer:["orff"],title:["o fortuna"]},
+    13:{display:"Georges Bizet – Carmen",composer:["bizet"],title:["carmen"]},
+    14:{display:"Edvard Grieg – Morgenstimmung",composer:["grieg"],title:["morgenstimmung"]},
+    15:{display:"Johann Strauss II – An der schönen blauen Donau",composer:["strauss"],title:["an der schonen blauen donau"]}
+  },
+  2:{ // Runde 2 – Filmmusik
+    1:{display:"Forrest Gump",movie:["forrest gump"]},
+    2:{display:"8 Mile",movie:["8 mile","eight mile"]},
+    3:{display:"Die fabelhafte Welt der Amélie",movie:["amelie"]},
+    4:{display:"Harry Potter – Hedwig’s Theme",movie:["harry potter","hedwig"]},
+    5:{display:"The Godfather",movie:["godfather","pate"]},
+    6:{display:"Fight Club",movie:["fight club"]},
+    7:{display:"Ziemlich beste Freunde",movie:["ziemlich beste freunde"]},
+    8:{display:"Interstellar",movie:["interstellar"]},
+    9:{display:"Schindlers Liste",movie:["schindlers liste"]},
+    10:{display:"Inception",movie:["inception"]},
+    11:{display:"The Office",movie:["the office"]},
+    12:{display:"Requiem for a Dream",movie:["requiem for a dream"]},
+    13:{display:"Chariots of Fire",movie:["chariots","stunde des siegers"]},
+    14:{display:"Batman Begins",movie:["batman begins"]},
+    15:{display:"Barbie",movie:["barbie"]},
+    16:{display:"Sherlock Holmes",movie:["sherlock holmes"]}
+  }
+};
 
-/* ---------- UI ---------- */
-function resetView(){
- answersVisible=false;
- solutionVisible=false;
- solutionBox.style.display="none";
+/* ---------- DATA ---------- */
+async function refreshData(){
+ teams=(await supabase.from("teams").select("*").order("created_at")).data||[];
+ answers=(await supabase.from("answers").select("*")).data||[];
  render();
 }
 
@@ -200,50 +205,65 @@ function populateSongs(){
  song=1;
 }
 
+/* ---------- RENDER ---------- */
+function resetView(){
+ answersVisible=false;
+ solutionVisible=false;
+ solutionBox.style.display="none";
+ render();
+}
+
 function render(){
  answersContainer.innerHTML="";
  teams.forEach(team=>{
   const row=document.createElement("div");
   row.className="team";
+  row.innerHTML=`<div class="team-name">${team.name}</div>`;
 
   const ans=answers.find(a=>a.team_id===team.id&&a.round===round&&a.song===song);
 
-  row.innerHTML=`<div class="team-name">${team.name}</div>`;
-
   if(!answersVisible){
     row.innerHTML+=`<div class="answer hint"></div>`;
-  } else if(!ans){
+  } else if(!ans || (!ans.artist && !ans.movie)){
     row.innerHTML+=`<div class="answer hint">Keine Antwort</div>`;
   } else if(!solutionVisible){
-    row.innerHTML+=`<div class="answer">${ans.movie}</div>`;
+    row.innerHTML+=round===1
+      ? `<div class="answer">${ans.artist} – ${ans.title}</div>`
+      : `<div class="answer">${ans.movie}</div>`;
   } else {
-    const solList=solutions[round]?.[song]||[];
-    const score=Math.max(...solList.map(s=>similarity(normalize(ans.movie),normalize(s))));
-    const cls=classify(score);
-    row.classList.add(cls);
-    row.innerHTML+=`<div class="answer">${ans.movie}</div>`;
+    let score=0;
+    const sol=solutions[round][song];
+    if(round===1){
+      score=Math.max(
+        ...sol.composer.map(c=>similarity(normalize(ans.artist),normalize(c))),
+        ...sol.title.map(t=>similarity(normalize(ans.title),normalize(t)))
+      );
+    } else {
+      score=Math.max(...sol.movie.map(m=>similarity(normalize(ans.movie),normalize(m))));
+    }
+    row.classList.add(classify(score));
+    row.innerHTML+=round===1
+      ? `<div class="answer">${ans.artist} – ${ans.title}</div>`
+      : `<div class="answer">${ans.movie}</div>`;
   }
-
   answersContainer.appendChild(row);
  });
 }
 
-/* ---------- Events ---------- */
-round2Btn.onclick=()=>{round=2;populateSongs();resetView();}
+/* ---------- EVENTS ---------- */
 round1Btn.onclick=()=>{round=1;populateSongs();resetView();}
-
+round2Btn.onclick=()=>{round=2;populateSongs();resetView();}
 songSelect.onchange=e=>{song=Number(e.target.value);resetView();}
+
 showAnswersBtn.onclick=()=>{answersVisible=true;render();}
 showSolutionBtn.onclick=()=>{
- const sol=solutions[round]?.[song];
- if(!sol) return;
- solutionBox.textContent=sol[0];
+ solutionBox.textContent=solutions[round][song].display;
  solutionBox.style.display="block";
  solutionVisible=true;
  render();
-};
+}
 
-/* ---------- Start ---------- */
+/* ---------- START ---------- */
 populateSongs();
 refreshData();
 
