@@ -110,12 +110,25 @@
   background: #475569;
   cursor: not-allowed;
 }
+    
+#teamHeader {
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  background: #1f2937;
+  border-radius: 10px;
+}
+    
 </style>
 </head>
 <body>
 
 <h1>🔊 Buzzer‑Runde</h1>
 
+<div id="teamHeader" style="display:none;">
+  <strong>Team:</strong> <span id="teamName"></span>
+</div>
+  
 <div id="selectTeam">
   <p>Wählt euer Team:</p>
   <select id="teamSelect"></select>
@@ -141,7 +154,21 @@ const confirmTeam = document.getElementById("confirmTeam");
 const selectTeamDiv = document.getElementById("selectTeam");
 const buzzArea = document.getElementById("buzzArea");
 const buzzButton = document.getElementById("buzzButton");
+const teamHeader = document.getElementById("teamHeader");
+const teamNameSpan = document.getElementById("teamName");
 
+// ✅ Reload-Sicherheit: Team nach Seiten-Reload wieder anzeigen
+const storedTeamId = sessionStorage.getItem("teamId");
+const storedTeamName = sessionStorage.getItem("teamName");
+
+if (storedTeamId && storedTeamName) {
+  teamNameSpan.textContent = storedTeamName;
+  teamHeader.style.display = "block";
+
+  selectTeamDiv.style.display = "none";
+  buzzArea.style.display = "block";
+}
+  
 /**
  * TEMPORÄR: feste Frage
  * (wir ersetzen das später durch die echte aktive Frage aus buzzer_questions)
@@ -163,7 +190,15 @@ teamSelect.onchange = () => {
 };
 
 confirmTeam.onclick = () => {
-  sessionStorage.setItem("teamId", teamSelect.value);
+  const teamId = teamSelect.value;
+  const teamName = teamSelect.options[teamSelect.selectedIndex].text;
+
+  sessionStorage.setItem("teamId", teamId);
+  sessionStorage.setItem("teamName", teamName);
+
+  teamNameSpan.textContent = teamName;
+  teamHeader.style.display = "block";
+
   selectTeamDiv.style.display = "none";
   buzzArea.style.display = "block";
 };
