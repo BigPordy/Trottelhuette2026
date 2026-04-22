@@ -173,7 +173,9 @@ if (storedTeamId && storedTeamName) {
  * TEMPORÄR: feste Frage
  * (wir ersetzen das später durch die echte aktive Frage aus buzzer_questions)
  */
-const CURRENT_QUESTION_ID = 1;
+function getCurrentQuestionId() {
+  return Number(sessionStorage.getItem("currentQuestionIndex")) || 1;
+}
 
 async function loadTeams() {
   const { data } = await db.from("teams").select("id, name").order("created_at");
@@ -216,7 +218,7 @@ confirmTeam.onclick = () => {
 
   const { error } = await db.from("buzz_events").insert({
     team_id: teamId,
-    question_id: CURRENT_QUESTION_ID
+    question_id: getCurrentQuestionId()
   });
 
   if (error) {
@@ -283,7 +285,7 @@ function showReadyForReBuzz() {
 
     await db.from("buzz_events").insert({
       team_id: teamId,
-      question_id: CURRENT_QUESTION_ID
+      question_id: getCurrentQuestionId()
     });
   };
 }
