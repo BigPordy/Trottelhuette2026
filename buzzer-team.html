@@ -218,7 +218,7 @@ confirmTeam.onclick = () => {
 
   const { error } = await db.from("buzz_events").insert({
     team_id: teamId,
-    question_id: getCurrentQuestionId()
+    question_id: Number(sessionStorage.getItem("currentQuestionIndex"))
   });
 
   if (error) {
@@ -285,7 +285,7 @@ function showReadyForReBuzz() {
 
     await db.from("buzz_events").insert({
       team_id: teamId,
-      question_id: getCurrentQuestionId()
+      question_id: Number(sessionStorage.getItem("currentQuestionIndex"))
     });
   };
 }
@@ -301,6 +301,15 @@ const stateChannel = db.channel("buzzer-state");
 stateChannel
   // 🔒 GLOBALER LOCK: ein Team hat gebuzzert
   .on("broadcast", { event: "lock" }, (payload) => {
+    // =======================================
+// 🧮 AKTUELLE FRAGE VOM HOST SPEICHERN
+// =======================================
+if (payload.payload.questionIndex !== undefined) {
+  sessionStorage.setItem(
+    "currentQuestionIndex",
+    payload.payload.questionIndex
+  );
+}
     const winnerId = payload.payload.winnerTeamId;
     const myTeamId = sessionStorage.getItem("teamId");
 
