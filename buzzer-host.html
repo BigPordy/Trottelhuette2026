@@ -165,6 +165,12 @@ db.channel("buzz-events")
 
       winnerTeamId = payload.new.team_id;
 
+     //✅ Sichtbares Feedback
+      winnerBox.innerHTML = `
+        <div class="winner">
+          🔔 Ein Team hat zuerst gebuzzert
+        </div>
+      `;
        decisionBox.style.display = "block";
 
       // ✅ GLOBALEN LOCK AN ALLE TEAMS SENDEN
