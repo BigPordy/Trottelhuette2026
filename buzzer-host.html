@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Buzzer – Host</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: white;
+      padding: 2rem;
+    }
+    .winner {
+      margin-top: 2rem;
+      font-size: 2rem;
+      padding: 1.5rem;
+      background: #14532d;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎛️ Buzzer – Host</h1>
+
+<p>Status: <strong id="status">Warte auf Buzz …</strong></p>
+
+<div id="winnerBox"></div>
+
+<script>
+const db = window.supabase.createClient(
+  "https://havaoqxnxnlmyfbldyic.supabase.co",
+  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+);
+
+// TEMP: feste Frage, später dynamisch
+const CURRENT_QUESTION_ID = 1;
+
+// Nur der erste Buzz zählt
+let winnerTeamId = null;
+
+// ✅ Realtime Abo auf buzz_events
+db.channel('buzz-events')
+  .on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'buzz_events',
+      filter: `question_id=eq.${CURRENT_QUESTION_ID}`
+    },
+    async (payload) => {
+
+      // 🔒 Wenn schon jemand gewonnen hat → ignorieren
+      if (winnerTeamId) return;
+
+      winnerTeamId = payload.new.team_id;
+      document.getElementById("status").textContent = "Buzz empfangen";
+
+      // Teamnamen laden
+      const { data } = await db
+        .from("teams")
+        .select("name")
+        .eq("id", winnerTeamId)
+        .single();
+
+      document.getElementById("winnerBox").innerHTML = `
+        <div class="winner">
+          🔔 <strong>${data.name}</strong> hat zuerst gebuzzert!
+        </div>
+      `;
+
+      console.log("Erster Buzz von:", data.name);
+    }
+  )
+  .subscribe();
+</script>
+
+</body>
+</html>
