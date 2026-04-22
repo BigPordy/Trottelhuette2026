@@ -115,11 +115,17 @@ sessionStorage.setItem(
   "currentQuestionIndex",
   currentQuestionIndex
 );
-  // 🔓 Buzzer erstmals freigeben
-  channel.broadcast.send({
-    event: "unlock",
-    payload: { blockedTeams: [] }
-  });
+// =======================================
+// 🔓 BUZZER FREIGEBEN + AKTUELLE FRAGE SENDEN
+// =======================================
+channel.broadcast.send({
+  event: "unlock",
+  payload: {
+    blockedTeams: blockedTeams,
+    questionIndex: currentQuestionIndex
+  }
+});
+
 };
   
 // ✅ Nur der erste Buzz zählt
@@ -175,12 +181,16 @@ console.log("Realtime Buzz Event:", payload);
 
       winnerTeamId = payload.new.team_id;
 
-// ✅ Sichtbares Feedback für den Host
+
+// =======================================
+// 📣 HOST-ANZEIGE: GEWINNER-TEAM
+// =======================================
 winnerBox.innerHTML = `
   <div class="winner">
-    🔔 Ein Team hat zuerst gebuzzert
+    🔔 Team ${winnerTeamId} hat zuerst gebuzzert
   </div>
 `;
+
 
 // Bewertungsbuttons anzeigen
 decisionBox.style.display = "block";
@@ -303,7 +313,9 @@ wrongBtn.onclick = () => {
     type: "broadcast",
     event: "unlock",
     payload: {
-      blockedTeams: blockedTeams
+    blockedTeams: blockedTeams,
+    questionIndex: currentQuestionIndex
+
     }
   });
   
