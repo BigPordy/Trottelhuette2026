@@ -125,8 +125,39 @@ correctBtn.onclick = () => {
   decisionBox.style.display = "none";
 };
 
+// ================================
+// ❌ HOST-BEWERTUNG: PECH 300
+// ================================
+// 📍 Ort: buzzer-host.html
+//      Button-Handler für falsche Antwort
+//      Löst Re-Buzz für verbleibende Teams aus
 wrongBtn.onclick = () => {
+
+  // Bewertungsbuttons ausblenden
   decisionBox.style.display = "none";
+
+  // Aktuelles Team für diese Frage sperren
+  blockedTeams.push(winnerTeamId);
+
+  // Visuelles Feedback für den Host
+  document.getElementById("winnerBox").innerHTML += `
+    <div style="margin-top:1rem; font-size:1.6rem;">
+      ❌ Pech 300
+    </div>
+  `;
+
+  // Gewinner zurücksetzen (niemand ist aktuell aktiv)
+  winnerTeamId = null;
+
+  // 🔁 GLOBAL: Re-Buzz für verbleibende Teams
+  // Blockierte Teams werden mitgesendet
+  channel.send({
+    type: "broadcast",
+    event: "unlock",
+    payload: {
+      blockedTeams: blockedTeams
+    }
+  });
 };
 </script>
 
