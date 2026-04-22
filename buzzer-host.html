@@ -41,6 +41,25 @@
 </head>
 <body>
 
+<!-- ===================================== -->
+<!-- 📘 BUZZER-RUNDEN-EINLEITUNG -->
+<!-- ===================================== -->
+<div id="introBox">
+  <h2>🔊 Buzzer‑Runde</h2>
+
+  <p><strong>So funktioniert die Runde:</strong></p>
+  <ul>
+    <li>Es gibt <strong>genau 15 Fragen</strong>.</li>
+    <li>Der Host gibt den Buzzer frei.</li>
+    <li>Das schnellste Team darf antworten.</li>
+    <li>✅ Richtig → +2 Punkte</li>
+    <li>❌ Falsch (Pech 300) → −1 Punkt</li>
+    <li>Nach falscher Antwort dürfen die anderen Teams erneut buzzern.</li>
+  </ul>
+
+  <button id="startBuzzerBtn">▶ Buzzer‑Runde starten</button>
+</div>
+  
 <h1>🎛️ Buzzer – Host</h1>
 
 <p>Status: <strong id="status">Warte auf Buzz …</strong></p>
@@ -51,6 +70,12 @@
   <button id="wrongBtn">❌ Pech 300</button>
 </div>
 
+<!-- ===================================== -->
+<!-- ⏭️ NÄCHSTE FRAGE FREIGEBEN (HOST) -->
+<!-- ===================================== -->
+<div id="nextQuestionBox" style="display:none; margin-top:1.5rem;">
+  <button id="nextQuestionBtn"></button>
+</div>
   
 <script>
 // Supabase + Channel
@@ -65,14 +90,56 @@ const channel = db.channel("buzzer-state");
 const decisionBox = document.getElementById("decisionBox");
 const correctBtn = document.getElementById("correctBtn");
 const wrongBtn = document.getElementById("wrongBtn");
-  
-// TEMP: feste Frage (kommt später dynamisch)
-const CURRENT_QUESTION_ID = 1;
+const startBuzzerBtn = document.getElementById("startBuzzerBtn");
+const statusEl = document.getElementById("status");
+const winnerBox = document.getElementById("winnerBox");
+const introBox = document.getElementById("introBox");
+const nextQuestionBox = document.getElementById("nextQuestionBox");
+const nextQuestionBtn = document.getElementById("nextQuestionBtn");
 
+
+  // =======================================
+// ▶ START DER BUZZER-RUNDE (EINLEITUNG)
+// =======================================
+startBuzzerBtn.onclick = () => {
+  introBox.style.display = "none";
+
+  statusEl.textContent =
+    `Frage ${currentQuestionIndex} von ${TOTAL_QUESTIONS}`;
+
+  // Erste Freigabe des Buzzers
+  channel.send({
+    type: "broadcast",
+    event: "unlock",
+    payload: { blockedTeams: [] }
+  });
+};
   
 // ✅ Nur der erste Buzz zählt
 let winnerTeamId = null;
 let blockedTeams = [];
+
+// =======================================
+// 📊 BUZZER-RUNDENSTATUS (FRAGEN + PUNKTE)
+// =======================================
+// 📍 Ort: buzzer-host.html
+//      Globaler Zustand für den gesamten Buzzer-Modus
+
+const TOTAL_QUESTIONS = 15;
+let currentQuestionIndex = 1;
+  
+// =======================================
+// 🧮 BUTTON-TEXT: NÄCHSTE FRAGE
+// =======================================
+function updateNextQuestionButton() {
+  nextQuestionBtn.textContent =
+    `▶ Weiter mit Frage ${currentQuestionIndex} / ${TOTAL_QUESTIONS}`;
+}
+  
+// Lokaler Punktezähler für diese Buzzer-Runde
+// Struktur: { [teamId]: punkte }
+let buzzerScores = {};
+  
   // Realtime-Handler
 // ✅ EIN einziges Realtime-Abo auf buzz_events
 db.channel("buzz-events")
@@ -82,32 +149,23 @@ db.channel("buzz-events")
       event: "INSERT",
       schema: "public",
       table: "buzz_events",
-      filter: `question_id=eq.${CURRENT_QUESTION_ID}`
+      filter: null
     },
     async (payload) => {
 
-      // 🔒 Wenn bereits jemand gewonnen hat → ignorieren
+      // =======================================
+      // ❓ BUZZ GEHÖRT ZUR AKTUELLEN FRAGE?
+      // =======================================
+      if (payload.new.question_id !== currentQuestionIndex) return;
+      
+      // =======================================
+      // 🔒 NUR DER ERSTE BUZZ ZÄHLT
+      // =======================================
       if (winnerTeamId) return;
 
       winnerTeamId = payload.new.team_id;
-      document.getElementById("status").textContent = "Buzz empfangen";
 
-      // ✅ Gewinner-Teamnamen laden
-      const { data } = await db
-        .from("teams")
-        .select("name")
-        .eq("id", winnerTeamId)
-        .single();
-
-      // ✅ Gewinner anzeigen
-      document.getElementById("winnerBox").innerHTML = `
-        <div class="winner">
-          🔔 <strong>${data.name}</strong> hat zuerst gebuzzert!
-        </div>
-      `;
-      decisionBox.style.display = "block";
-
-      console.log("Erster Buzz von:", data.name);
+       decisionBox.style.display = "block";
 
       // ✅ GLOBALEN LOCK AN ALLE TEAMS SENDEN
       channel.send({
@@ -121,28 +179,108 @@ db.channel("buzz-events")
   )
   .subscribe();
 
-correctBtn.onclick = () => {
-  decisionBox.style.display = "none";
-};
-
 // =======================================
-// ❌ HOST-BEWERTUNG: FALSCH
+// ✅ HOST-BEWERTUNG: RICHTIG (+2 PUNKTE)
 // =======================================
 // 📍 Ort: buzzer-host.html
-//      Host entscheidet "falsch", zeigt selbst keinen Spieltext
-//      Teams bekommen Pech-300 per Broadcast
+correctBtn.onclick = () => {
+
+  decisionBox.style.display = "none";
+
+  // Punkte für das Gewinner-Team addieren
+  buzzerScores[winnerTeamId] = (buzzerScores[winnerTeamId] || 0) + 2;
+
+  document.getElementById("winnerBox").innerHTML += `
+    <div style="margin-top:1rem; font-size:1.6rem;">
+      ✅ Richtig!
+    </div>
+  `;
+
+// ⏭️ Nächste Frage vorbereiten
+nextQuestionBox.style.display = "block";
+updateNextQuestionButton();
+}
+  
+// =======================================
+// 🏁 BUZZER-RUNDE BEENDEN
+// =======================================
+// 📍 Ort: buzzer-host.html
+function endBuzzerRound() {
+
+  document.getElementById("status").textContent =
+    "Buzzer-Runde beendet";
+
+  let summary = "<h2>🏁 Buzzer-Punkte</h2><ul>";
+
+  for (const teamId in buzzerScores) {
+    summary += `<li>${teamId}: ${buzzerScores[teamId]} Punkte</li>`;
+  }
+
+  summary += "</ul><p>Punkte können jetzt zum Gesamtspiel addiert werden.</p>";
+
+document.getElementById("winnerBox").innerHTML = `
+  ${summary}
+  <br>
+  <button id="saveScoresBtn">✅ Punkte ins Spiel übernehmen</button>
+`;
+
+  // 👉 Nächster Schritt: Scores in team_scores übernehmen
+}
+  
+// =======================================
+// 🧮 BUZZER-SCORES INS HAUPTSPIEL ÜBERNEHMEN
+// =======================================
+// 📍 Ort: buzzer-host.html
+//      Addiert die Buzzer-Punkte zu team_scores
+async function saveBuzzerScoresToGame() {
+
+  const updates = [];
+
+  for (const teamId in buzzerScores) {
+    updates.push({
+      team_id: teamId,
+      score: buzzerScores[teamId], // wird addiert (siehe unten)
+      updated_at: new Date().toISOString()
+    });
+  }
+
+  // Alle Scores holen
+  const { data: existingScores } = await db
+    .from("team_scores")
+    .select("team_id, score");
+
+  // Bestehende Scores mergen
+  const finalScores = updates.map(update => {
+    const existing = existingScores.find(e => e.team_id === update.team_id);
+    return {
+      team_id: update.team_id,
+      score: (existing?.score || 0) + update.score,
+      updated_at: update.updated_at
+    };
+  });
+
+  // In DB schreiben
+  await db.from("team_scores").upsert(finalScores);
+}
+  
+// =======================================
+// ❌ HOST-BEWERTUNG: PECH 300 (-1 PUNKT)
+// =======================================
+// 📍 Ort: buzzer-host.html
 wrongBtn.onclick = () => {
 
-  // Bewertungsbuttons ausblenden
   decisionBox.style.display = "none";
+
+  // Punktabzug
+  buzzerScores[winnerTeamId] = (buzzerScores[winnerTeamId] || 0) - 1;
 
   // Team für diese Frage sperren
   blockedTeams.push(winnerTeamId);
 
-  // Aktuellen Gewinner zurücksetzen
+  // Gewinner zurücksetzen
   winnerTeamId = null;
 
-  // 🔁 GLOBAL: Re-Buzz + Team-Feedback auslösen
+  // 🔁 Re-Buzz für verbleibende Teams freigeben
   channel.send({
     type: "broadcast",
     event: "unlock",
@@ -150,10 +288,57 @@ wrongBtn.onclick = () => {
       blockedTeams: blockedTeams
     }
   });
+  
+// ⏭️ Nächste Frage vorbereiten
+nextQuestionBox.style.display = "block";
+updateNextQuestionButton();
 };
 
-</script>
+// =======================================
+// ⏭️ FRAGE ABSCHLIESSEN
+// =======================================
+function finishQuestion() {
 
+  // Zustand für nächste Frage zurücksetzen
+  winnerTeamId = null;
+  blockedTeams = [];
+  decisionBox.style.display = "none";
+  
+  currentQuestionIndex++;
+
+  // 🚨 NUR HIER: nach Frage 15 Gesamtauswertung
+  if (currentQuestionIndex > TOTAL_QUESTIONS) {
+    endBuzzerRound();
+    return;
+  }
+
+  // ✅ Normalfall: nächste Frage vorbereiten
+  statusEl.textContent =
+    `Frage ${currentQuestionIndex} von ${TOTAL_QUESTIONS}`;
+
+  winnerBox.innerHTML = "<p>Bereit für die nächste Frage.</p>";
+}
+
+// =======================================
+// ✅ HOST-AKTION: SCORES SPEICHERN
+// =======================================
+// 📍 Ort: buzzer-host.html
+document.addEventListener("click", async (e) => {
+  if (e.target.id === "saveScoresBtn") {
+    e.target.disabled = true;
+    await saveBuzzerScoresToGame();
+    e.target.textContent = "✅ Punkte gespeichert";
+  }
+});
+  
+// =======================================
+// ▶ HOST-AKTION: NÄCHSTE FRAGE STARTEN
+// =======================================
+nextQuestionBtn.onclick = () => {
+  nextQuestionBox.style.display = "none";
+  finishQuestion();
+};
+</script>
 
 </body>
 </html>
