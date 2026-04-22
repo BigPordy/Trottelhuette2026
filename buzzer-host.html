@@ -107,9 +107,8 @@ startBuzzerBtn.onclick = () => {
   statusEl.textContent =
     `Frage ${currentQuestionIndex} von ${TOTAL_QUESTIONS}`;
 
-  // Erste Freigabe des Buzzers
+  // ✅ NUR Supabase JS v2 kompatibel
   channel.broadcast.send({
-    type: "broadcast",
     event: "unlock",
     payload: { blockedTeams: [] }
   });
