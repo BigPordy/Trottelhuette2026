@@ -108,7 +108,7 @@ startBuzzerBtn.onclick = () => {
     `Frage ${currentQuestionIndex} von ${TOTAL_QUESTIONS}`;
 
   // Erste Freigabe des Buzzers
-  channel.braodcast.send({
+  channel.broadcast.send({
     type: "broadcast",
     event: "unlock",
     payload: { blockedTeams: [] }
