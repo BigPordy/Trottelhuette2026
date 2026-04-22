@@ -108,7 +108,7 @@ startBuzzerBtn.onclick = () => {
     `Frage ${currentQuestionIndex} von ${TOTAL_QUESTIONS}`;
 
   // Erste Freigabe des Buzzers
-  channel.send({
+  channel.braodcast.send({
     type: "broadcast",
     event: "unlock",
     payload: { blockedTeams: [] }
@@ -153,6 +153,9 @@ db.channel("buzz-events")
     },
     async (payload) => {
 
+// ✅ DEBUG: Realtime-Event angekommen
+console.log("Realtime Buzz Event:", payload);
+
       // =======================================
       // ❓ BUZZ GEHÖRT ZUR AKTUELLEN FRAGE?
       // =======================================
@@ -165,20 +168,22 @@ db.channel("buzz-events")
 
       winnerTeamId = payload.new.team_id;
 
-     //✅ Sichtbares Feedback
-      winnerBox.innerHTML = `
-        <div class="winner">
-          🔔 Ein Team hat zuerst gebuzzert
-        </div>
-      `;
-       decisionBox.style.display = "block";
+// ✅ Sichtbares Feedback für den Host
+winnerBox.innerHTML = `
+  <div class="winner">
+    🔔 Ein Team hat zuerst gebuzzert
+  </div>
+`;
+
+// Bewertungsbuttons anzeigen
+decisionBox.style.display = "block";
 
       // ✅ GLOBALEN LOCK AN ALLE TEAMS SENDEN
-      channel.send({
+      channel.broadcast.send({
         type: "broadcast",
         event: "lock",
         payload: {
-          winnerTeamId: winnerTeamId
+          winnerTeamId: { winnerTeamId }
         }
       });
     }
@@ -287,11 +292,11 @@ wrongBtn.onclick = () => {
   winnerTeamId = null;
 
   // 🔁 Re-Buzz für verbleibende Teams freigeben
-  channel.send({
+  channel.broadcast.send({
     type: "broadcast",
     event: "unlock",
     payload: {
-      blockedTeams: blockedTeams
+      blockedTeams: { blockedTeams }
     }
   });
   
