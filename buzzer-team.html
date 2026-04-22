@@ -238,7 +238,90 @@ function showBlocked() {
     <p>Diese Frage ist für euch vorbei.</p>
   `;
 }
+// =======================================
+// ✅ TEAM-UI: GEWINNER
+// =======================================
+// 📍 Ort: buzzer-team.html
+//      Wird angezeigt, wenn dieses Team zuerst gebuzzert hat
+function showWinner() {
+  buzzArea.innerHTML = `
+    <h2>✅ Du hast gebuzzert!</h2>
+    <p>Warte auf die Entscheidung des Hosts …</p>
+  `;
+}
+
+// =======================================
+// ⏸️ TEAM-UI: ZU SPÄT
+// =======================================
+// 📍 Ort: buzzer-team.html
+//      Wird angezeigt, wenn ein anderes Team schneller war
+function showTooLate() {
+  buzzArea.innerHTML = `
+    <h2>⏸️ Zu spät</h2>
+    <p>Ein anderes Team war schneller.</p>
+  `;
+}
+
+// =======================================
+// 🔁 TEAM-UI: RE-BUZZ FREIGEGEBEN
+// =======================================
+// 📍 Ort: buzzer-team.html
+//      Zeigt nach ❌ Pech 300 den Buzzer erneut an
+function showReadyForReBuzz() {
+  buzzArea.innerHTML = `
+    <h2>Bereit zum Buzzern</h2>
+    <div id="buzzerWrapper">
+      <button id="buzzButton">BUZZ</button>
+    </div>
+  `;
+
+  const newBuzzButton = document.getElementById("buzzButton");
+
+  newBuzzButton.onclick = async () => {
+    const teamId = sessionStorage.getItem("teamId");
+    newBuzzButton.disabled = true;
+
+    await db.from("buzz_events").insert({
+      team_id: teamId,
+      question_id: CURRENT_QUESTION_ID
+    });
+  };
+}
 loadTeams();
+// =======================================
+// 📡 TEAM-SEITE: BROADCAST-LISTENER
+// =======================================
+// 📍 Ort: buzzer-team.html
+//      Reagiert auf Host-Signale (lock / unlock)
+
+const stateChannel = db.channel("buzzer-state");
+
+stateChannel
+  // 🔒 GLOBALER LOCK: ein Team hat gebuzzert
+  .on("broadcast", { event: "lock" }, (payload) => {
+    const winnerId = payload.payload.winnerTeamId;
+    const myTeamId = sessionStorage.getItem("teamId");
+
+    if (winnerId === myTeamId) {
+      showWinner();
+    } else {
+      showTooLate();
+    }
+  })
+
+  // 🔁 RE-BUZZ NACH ❌ PECH 300
+  .on("broadcast", { event: "unlock" }, (payload) => {
+    const blockedTeams = payload.payload.blockedTeams || [];
+    const myTeamId = sessionStorage.getItem("teamId");
+
+    if (blockedTeams.includes(myTeamId)) {
+      showBlocked();
+    } else {
+      showReadyForReBuzz();
+    }
+  })
+
+  .subscribe();
 </script>
 
 </body>
