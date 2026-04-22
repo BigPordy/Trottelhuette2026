@@ -182,7 +182,7 @@ decisionBox.style.display = "block";
         type: "broadcast",
         event: "lock",
         payload: {
-          winnerTeamId: { winnerTeamId }
+          winnerTeamId: winnerTeamId
         }
       });
     }
@@ -295,7 +295,7 @@ wrongBtn.onclick = () => {
     type: "broadcast",
     event: "unlock",
     payload: {
-      blockedTeams: { blockedTeams }
+      blockedTeams: blockedTeams
     }
   });
   
