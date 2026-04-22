@@ -35,37 +35,41 @@ const db = window.supabase.createClient(
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 
-// TEMP: feste Frage, später dynamisch
+// ✅ Globaler Channel für Lock-Signale
+const channel = db.channel("buzzer-state");
+
+// TEMP: feste Frage (kommt später dynamisch)
 const CURRENT_QUESTION_ID = 1;
 
-// Nur der erste Buzz zählt
+// ✅ Nur der erste Buzz zählt
 let winnerTeamId = null;
 
-// ✅ Realtime Abo auf buzz_events
-db.channel('buzz-events')
+// ✅ EIN einziges Realtime-Abo auf buzz_events
+db.channel("buzz-events")
   .on(
-    'postgres_changes',
+    "postgres_changes",
     {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'buzz_events',
+      event: "INSERT",
+      schema: "public",
+      table: "buzz_events",
       filter: `question_id=eq.${CURRENT_QUESTION_ID}`
     },
     async (payload) => {
 
-      // 🔒 Wenn schon jemand gewonnen hat → ignorieren
+      // 🔒 Wenn bereits jemand gewonnen hat → ignorieren
       if (winnerTeamId) return;
 
       winnerTeamId = payload.new.team_id;
       document.getElementById("status").textContent = "Buzz empfangen";
 
-      // Teamnamen laden
+      // ✅ Gewinner-Teamnamen laden
       const { data } = await db
         .from("teams")
         .select("name")
         .eq("id", winnerTeamId)
         .single();
 
+      // ✅ Gewinner anzeigen
       document.getElementById("winnerBox").innerHTML = `
         <div class="winner">
           🔔 <strong>${data.name}</strong> hat zuerst gebuzzert!
@@ -73,10 +77,20 @@ db.channel('buzz-events')
       `;
 
       console.log("Erster Buzz von:", data.name);
+
+      // ✅ GLOBALEN LOCK AN ALLE TEAMS SENDEN
+      channel.send({
+        type: "broadcast",
+        event: "lock",
+        payload: {
+          winnerTeamId: winnerTeamId
+        }
+      });
     }
   )
   .subscribe();
 </script>
+
 
 </body>
 </html>
