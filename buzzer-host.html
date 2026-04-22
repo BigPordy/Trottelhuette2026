@@ -19,6 +19,24 @@
       background: #14532d;
       border-radius: 12px;
     }
+    #decisionBox button {
+  font-size: 1.4rem;
+  padding: 1rem 2rem;
+  margin-right: 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+#correctBtn {
+  background: #16a34a;
+  color: white;
+}
+
+#wrongBtn {
+  background: #dc2626;
+  color: white;
+}
   </style>
 </head>
 <body>
@@ -28,22 +46,34 @@
 <p>Status: <strong id="status">Warte auf Buzz …</strong></p>
 
 <div id="winnerBox"></div>
+<div id="decisionBox" style="display:none; margin-top:2rem;">
+  <button id="correctBtn">✅ Richtig</button>
+  <button id="wrongBtn">❌ Pech 300</button>
+</div>
 
+  
 <script>
-const db = window.supabase.createClient(
+// Supabase + Channel
+  const db = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
-
+  
 // ✅ Globaler Channel für Lock-Signale
 const channel = db.channel("buzzer-state");
-
+// DOM-Refs
+const decisionBox = document.getElementById("decisionBox");
+const correctBtn = document.getElementById("correctBtn");
+const wrongBtn = document.getElementById("wrongBtn");
+  
 // TEMP: feste Frage (kommt später dynamisch)
 const CURRENT_QUESTION_ID = 1;
 
+  
 // ✅ Nur der erste Buzz zählt
 let winnerTeamId = null;
-
+let blockedTeams = [];
+  // Realtime-Handler
 // ✅ EIN einziges Realtime-Abo auf buzz_events
 db.channel("buzz-events")
   .on(
@@ -75,6 +105,7 @@ db.channel("buzz-events")
           🔔 <strong>${data.name}</strong> hat zuerst gebuzzert!
         </div>
       `;
+      decisionBox.style.display = "block";
 
       console.log("Erster Buzz von:", data.name);
 
@@ -89,6 +120,14 @@ db.channel("buzz-events")
     }
   )
   .subscribe();
+
+correctBtn.onclick = () => {
+  decisionBox.style.display = "none";
+};
+
+wrongBtn.onclick = () => {
+  decisionBox.style.display = "none";
+};
 </script>
 
 
