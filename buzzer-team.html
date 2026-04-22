@@ -227,7 +227,17 @@ confirmTeam.onclick = () => {
     console.log("Buzz erfolgreich!");
   }
 };
-
+// =======================================
+// ❌ TEAM-UI: PECH 300 (TEAM GESPERRT)
+// =======================================
+// 📍 Ort: buzzer-team.html
+//      Direkt NACH buzzButton.onclick
+function showBlocked() {
+  buzzArea.innerHTML = `
+    <h2>❌ Pech 300</h2>
+    <p>Diese Frage ist für euch vorbei.</p>
+  `;
+}
 loadTeams();
 </script>
 
