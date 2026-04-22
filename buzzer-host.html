@@ -118,7 +118,7 @@ sessionStorage.setItem(
 // =======================================
 // 🔓 BUZZER FREIGEBEN + AKTUELLE FRAGE SENDEN
 // =======================================
-channel.broadcast.send({
+channel.send({
   event: "unlock",
   payload: {
     blockedTeams: blockedTeams,
@@ -196,7 +196,7 @@ winnerBox.innerHTML = `
 decisionBox.style.display = "block";
 
       // ✅ GLOBALEN LOCK AN ALLE TEAMS SENDEN
-      channel.broadcast.send({
+      channel.send({
         type: "broadcast",
         event: "lock",
         payload: {
@@ -309,7 +309,7 @@ wrongBtn.onclick = () => {
   winnerTeamId = null;
 
   // 🔁 Re-Buzz für verbleibende Teams freigeben
-  channel.broadcast.send({
+  channel.send({
     type: "broadcast",
     event: "unlock",
     payload: {
