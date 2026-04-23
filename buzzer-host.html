@@ -230,7 +230,7 @@ let buzzerScores = {};
 let winnerTeamId = null;
 let winnerTeamName = null;
 let blockedTeams = [];
-let scoreboardMode = "total"
+let scoreboardMode = "buzzer"
 // =======================================
 // 🔨 HILFSFUNKTIONEN
 // =======================================
@@ -554,6 +554,23 @@ async function showFinalScoreboard() {
   log(`📊 Zeige Final-Scoreboard...`);
 
 // =======================================
+// 🔘 BUTTON-STATUS SYNCEN (immer!)
+// =======================================
+if (scoreboardMode === "buzzer") {
+  showBuzzerOnlyBtn.classList.add("active");
+  showBuzzerOnlyBtn.classList.remove("secondary");
+
+  showTotalBtn.classList.remove("active");
+  showTotalBtn.classList.add("secondary");
+} else {
+  showTotalBtn.classList.add("active");
+  showTotalBtn.classList.remove("secondary");
+
+  showBuzzerOnlyBtn.classList.remove("active");
+  showBuzzerOnlyBtn.classList.add("secondary");
+}
+  
+// =======================================
 // 🧮 BUZZER-RUNDEN-PUNKTE AUS DB LADEN
 // =======================================
 const { data: buzzerScoresData, error: buzzerErr } = await db
@@ -614,7 +631,6 @@ showTotalBtn.classList.add("secondary");
   // 🏆 AUSGABE JE TEAM
   // =======================================
   sortedTeams.forEach((team, index) => {
-    const isLast = index === sortedTeams.length - 1;
     const base = baseScoreMap[team.id] || 0;
     const buzzer = buzzerScoreMap[team.id] || 0;
     const total = base + buzzer;
@@ -633,23 +649,23 @@ if (scoreboardMode === "buzzer") {
 }
 
 // =======================================
+  // 🏆 LETZTEN PLATZ ERKENNEN
+  // =======================================
+  const isLast = index === sortedTeams.length - 1;
+  const trophy = isLast ? " 🏆 Dummenpärchen" : "";
+
+// =======================================
   // 🏆 SCOREBOARD-ZEILE ERZEUGEN
   // =======================================
-  const row = document.createElement("div");
-  row.className = "row" + (index === 0 ? " gold" : "");
+const row = document.createElement("div");
+row.className = "row" + (isLast ? " gold" : "");
 row.innerHTML = `
+  <span><strong>${index + 1}. ${team.name}</strong></span>
   <span>
-    <strong>
-      ${index + 1}. ${team.name}
-      ${isLast ? " 🏆 Dummenpärchen" : ""}
-    </strong>
-  </span>
-  <span>
-    ${displayScore} Punkte<br>
+    ${displayScore} Punkte${trophy}<br>
     <small>${detailText}</small>
   </span>
 `;
-
   scoreboard.appendChild(row);
 });
 
