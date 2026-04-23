@@ -12,10 +12,13 @@ const map = L.map("mapContainer", {
 // 🌍 KARTEN-KACHELN (OpenStreetMap)
 // ================================
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: "© OpenStreetMap"
-}).addTo(map);
+L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+  {
+    maxZoom: 19,
+    attribution: "© OpenStreetMap & Carto"
+  }
+).addTo(map);
 
 // ================================
 // 📍 MARKER-LAYER
