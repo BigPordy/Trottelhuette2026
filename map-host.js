@@ -18,11 +18,6 @@ const map = L.map("mapContainer", {
     maxZoom: 18,
     attribution: "© OpenStreetMap & Carto"
   }
-).addTo(map);,
-  {
-    maxZoom: 19,
-    attribution: "© OpenStreetMap & Carto"
-  }
 ).addTo(map);
 
 // ================================
