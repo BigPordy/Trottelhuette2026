@@ -588,7 +588,7 @@ finishBuzzerBtn.onclick = async () => {
 
   log(`Payload: ${JSON.stringify(payload)}`);
 
-  const { error } = await db.from("team_scores").upsert(payload);
+  const { error } = await db.from("buzzer_scores").upsert(payload);
 
   if (error) {
     log(`❌ Fehler beim Speichern: ${error.message}`);
