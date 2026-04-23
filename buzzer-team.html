@@ -2,183 +2,260 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Buzzer – Team</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
   <style>
-    
-  body {
-  margin: 0;
-  padding: 0;
-  background: #111;
-  color: white;
-  font-family: system-ui, sans-serif;
-  text-align: center;
-}
+    body {
+      margin: 0;
+      padding: 1rem;
+      background: #111;
+      color: white;
+      font-family: system-ui, sans-serif;
+      text-align: center;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-#buzzerWrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh; /* ganzer Bildschirm */
-}
+    h1 {
+      margin: 0.5rem 0;
+      font-size: 2rem;
+    }
 
-#buzzButton {
-  width: 70vmin;
-  height: 70vmin;
-  max-width: 420px;
-  max-height: 420px;
+    #teamHeader {
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #1f2937;
+      border-radius: 10px;
+      display: none;
+      min-width: 300px;
+    }
 
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at top,
-    #ff5c5c,
-    #c00000
-  );
+    #selectTeam {
+      background: #1f2937;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+    }
 
-  border: none;
-  color: white;
-  font-size: 3rem;
-  font-weight: 800;
-  letter-spacing: 0.15em;
+    #teamSelect {
+      width: 100%;
+      max-width: 400px;
+      font-size: 1.4rem;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      border: 2px solid #375151;
+      background: #0f172a;
+      color: white;
+      outline: none;
+    }
 
-  cursor: pointer;
-  box-shadow:
-    0 18px 0 #7a0000,
-    0 25px 40px rgba(0,0,0,0.6);
+    #teamSelect:focus {
+      border-color: #2563eb;
+    }
 
-  transition: transform 0.05s ease, box-shadow 0.05s ease;
-}
+    #teamSelect option {
+      font-size: 1.2rem;
+      padding: 0.8rem;
+      background: #0f172a;
+      color: white;
+    }
 
-/* Druck-Effekt */
-#buzzButton:active {
-  transform: translateY(8px);
-  box-shadow:
-    0 10px 0 #7a0000,
-    0 15px 25px rgba(0,0,0,0.5);
-}
+    #confirmTeam {
+      width: 100%;
+      max-width: 400px;
+      font-size: 1.2rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
 
-/* Falls gesperrt */
-#buzzButton:disabled {
-  background: #555;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-/* Größere Teamauswahl für Mobile & Tablet */
-#teamSelect {
-  width: 90%;
-  max-width: 420px;
+    #confirmTeam:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
 
-  font-size: 1.6rem;       /* <-- TEXT GRÖSSE */
-  padding: 1.2rem;         /* <-- TOUCH-FREUNDLICH */
-  margin-top: 1rem;
+    #confirmTeam:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
 
-  border-radius: 12px;
-  border: 3px solid #374151;
+    #buzzArea {
+      display: none;
+      width: 100%;
+      max-width: 600px;
+    }
 
-  background-color: #1f2937;
-  color: white;
+    #buzzButton {
+      width: 60vmin;
+      height: 60vmin;
+      max-width: 350px;
+      max-height: 350px;
+      border-radius: 50%;
+      border: none;
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.05s ease;
+      box-shadow: 0 15px 0 #7a0000, 0 20px 40px rgba(0, 0, 0, 0.6);
+      background: radial-gradient(circle at top, #ff5c5c, #c00000);
+      color: white;
+      margin: 1rem auto;
+    }
 
-  outline: none;
-}
+    #buzzButton:active:not(:disabled) {
+      transform: translateY(6px);
+      box-shadow: 0 9px 0 #7a0000, 0 12px 25px rgba(0, 0, 0, 0.5);
+    }
 
-/* Fokus-Zustand (wichtig für UX) */
-#teamSelect:focus {
-  border-color: #2563eb;
-}
+    #buzzButton:disabled {
+      background: #555;
+      box-shadow: none;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
 
-/* Dropdown-Optionen größer darstellen */
-#teamSelect option {
-  font-size: 1.4rem;
-  padding: 1rem;
-}
-#confirmTeam {
-  margin-top: 1.5rem;
-  padding: 1.2rem 2rem;
+    .status-message {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin: 1rem 0;
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
 
-  font-size: 1.6rem;
-  font-weight: 700;
+    .status-message.winner {
+      background: #14532d;
+      color: #22c55e;
+    }
 
-  border-radius: 12px;
-  border: none;
+    .status-message.blocked {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
 
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-}
+    .status-message.waiting {
+      background: #1f2937;
+      color: #93c5fd;
+    }
 
-#confirmTeam:disabled {
-  background: #475569;
-  cursor: not-allowed;
-}
-    
-#teamHeader {
-  font-size: 1.6rem;
-  margin-bottom: 1rem;
-  padding: 0.8rem;
-  background: #1f2937;
-  border-radius: 10px;
-}
-    
-</style>
+    #buzzerWrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+  </style>
 </head>
+
 <body>
 
 <h1>🔊 Buzzer‑Runde</h1>
 
-<div id="teamHeader" style="display:none;">
+<!-- ===================================== -->
+<!-- 👤 TEAM-HEADER (Nach Auswahl) -->
+<!-- ===================================== -->
+<div id="teamHeader">
   <strong>Team:</strong> <span id="teamName"></span>
 </div>
-  
+
+<!-- ===================================== -->
+<!-- 🎯 TEAM-AUSWAHL SCREEN -->
+<!-- ===================================== -->
 <div id="selectTeam">
-  <p>Wählt euer Team:</p>
-  <select id="teamSelect"></select>
-  <br><br>
-  <button id="confirmTeam" disabled>Team bestätigen</button>
+  <h2>Wähle dein Team:</h2>
+  <select id="teamSelect">
+    <option value="">-- Bitte wählen --</option>
+  </select>
+  <button id="confirmTeam" disabled>✅ Team bestätigen</button>
 </div>
 
-<div id="buzzArea" style="display:none;">
-  <h2>Bereit zum Buzzern</h2>
-<div id="buzzerWrapper">
-  <button id="buzzButton">BUZZ</button>
-</div>
+<!-- ===================================== -->
+<!-- 🔘 BUZZER SCREEN -->
+<!-- ===================================== -->
+<div id="buzzArea">
+  <div id="buzzerWrapper">
+    <button id="buzzButton">BUZZ</button>
+  </div>
+  <div id="statusMessage" class="status-message waiting" style="display: none;"></div>
 </div>
 
 <script>
+// =======================================
+// 🔧 SUPABASE INITIALISIERUNG
+// =======================================
 const db = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 
+// =======================================
+// 📡 REALTIME CHANNEL
+// =======================================
+const stateChannel = db.channel("buzzer-state");
+
+// =======================================
+// 🎯 DOM-REFERENZEN
+// =======================================
+const selectTeam = document.getElementById("selectTeam");
 const teamSelect = document.getElementById("teamSelect");
 const confirmTeam = document.getElementById("confirmTeam");
-const selectTeamDiv = document.getElementById("selectTeam");
 const buzzArea = document.getElementById("buzzArea");
-const buzzButton = document.getElementById("buzzButton");
 const teamHeader = document.getElementById("teamHeader");
-const teamNameSpan = document.getElementById("teamName");
+const teamName = document.getElementById("teamName");
+const buzzButton = document.getElementById("buzzButton");
+const statusMessage = document.getElementById("statusMessage");
+const buzzerWrapper = document.getElementById("buzzerWrapper");
 
-// ✅ Reload-Sicherheit: Team nach Seiten-Reload wieder anzeigen
+// =======================================
+// 🎮 GAME STATE
+// =======================================
+let currentTeamId = null;
+let currentTeamName = null;
+let currentQuestion = null;
+let blockedTeamsArray = [];
+
+// =======================================
+// 💾 RELOAD-SICHERHEIT
+// =======================================
+// Nach Seiten-Reload Team wieder laden
 const storedTeamId = sessionStorage.getItem("teamId");
 const storedTeamName = sessionStorage.getItem("teamName");
 
 if (storedTeamId && storedTeamName) {
-  teamNameSpan.textContent = storedTeamName;
+  currentTeamId = storedTeamId;
+  currentTeamName = storedTeamName;
+  teamName.textContent = currentTeamName;
   teamHeader.style.display = "block";
-
-  selectTeamDiv.style.display = "none";
+  selectTeam.style.display = "none";
   buzzArea.style.display = "block";
-}
-  
-/**
- * TEMPORÄR: feste Frage
- * (wir ersetzen das später durch die echte aktive Frage aus buzzer_questions)
- */
-function getCurrentQuestionId() {
-  return Number(sessionStorage.getItem("currentQuestionIndex")) || 1;
+  showReadyForBuzz();
 }
 
+// =======================================
+// 📋 TEAMS AUS DB LADEN
+// =======================================
 async function loadTeams() {
-  const { data } = await db.from("teams").select("id, name").order("created_at");
+  const { data } = await db
+    .from("teams")
+    .select("id, name")
+    .order("created_at");
+
+  if (!data) return;
+
+  // Dropdown füllen
   data.forEach(team => {
     const opt = document.createElement("option");
     opt.value = team.id;
@@ -187,152 +264,168 @@ async function loadTeams() {
   });
 }
 
+// =======================================
+// 🎯 TEAM-AUSWAHL HANDLER
+// =======================================
 teamSelect.onchange = () => {
   confirmTeam.disabled = !teamSelect.value;
 };
 
 confirmTeam.onclick = () => {
-  const teamId = teamSelect.value;
-  const teamName = teamSelect.options[teamSelect.selectedIndex].text;
+  currentTeamId = teamSelect.value;
+  currentTeamName = teamSelect.options[teamSelect.selectedIndex].text;
 
-  sessionStorage.setItem("teamId", teamId);
-  sessionStorage.setItem("teamName", teamName);
+  // Speichern für Reload-Sicherheit
+  sessionStorage.setItem("teamId", currentTeamId);
+  sessionStorage.setItem("teamName", currentTeamName);
 
-  teamNameSpan.textContent = teamName;
+  // UI umschalten
+  teamName.textContent = currentTeamName;
   teamHeader.style.display = "block";
-
-  selectTeamDiv.style.display = "none";
+  selectTeam.style.display = "none";
   buzzArea.style.display = "block";
+
+  showReadyForBuzz();
 };
 
-  buzzButton.onclick = async () => {
-  const teamId = sessionStorage.getItem("teamId");
+// =======================================
+// 🔘 BUZZ BUTTON HANDLER
+// =======================================
+buzzButton.onclick = async () => {
+  console.log("🔔 Buzz gesendet!");
 
-  if (!teamId) {
-    alert("Kein Team gewählt!");
-    return;
-  }
-
-  // Button sofort deaktivieren → verhindert Doppelklicks
+  // Button sofort deaktivieren
   buzzButton.disabled = true;
 
+  const questionId = Number(sessionStorage.getItem("currentQuestionIndex")) || 1;
+
+  // ✅ BUZZ IN DB SPEICHERN
   const { error } = await db.from("buzz_events").insert({
-    team_id: teamId,
-    question_id: Number(sessionStorage.getItem("currentQuestionIndex"))
+    team_id: currentTeamId,
+    question_id: questionId
   });
 
   if (error) {
-    console.error("Buzz fehlgeschlagen:", error);
-    alert("Buzz fehlgeschlagen!");
-    buzzButton.disabled = false; // optional wieder aktivieren
-  } else {
-    console.log("Buzz erfolgreich!");
+    console.error("❌ Buzz-Fehler:", error);
+    buzzButton.disabled = false;
+    return;
   }
+
+  console.log("✅ Buzz erfolgreich gespeichert!");
 };
+
 // =======================================
-// ❌ TEAM-UI: PECH 300 (TEAM GESPERRT)
+// 📊 UI-FUNKTIONEN
 // =======================================
-// 📍 Ort: buzzer-team.html
-//      Direkt NACH buzzButton.onclick
-function showBlocked() {
-  buzzArea.innerHTML = `
-    <h2>❌ Pech 300</h2>
-    <p>Diese Frage ist für euch vorbei.</p>
-  `;
+
+function showReadyForBuzz() {
+  statusMessage.textContent = "Bereit zum Buzzern!";
+  statusMessage.className = "status-message waiting";
+  statusMessage.style.display = "block";
+  buzzButton.disabled = false;
+  buzzButton.textContent = "BUZZ";
 }
-// =======================================
-// ✅ TEAM-UI: GEWINNER
-// =======================================
-// 📍 Ort: buzzer-team.html
-//      Wird angezeigt, wenn dieses Team zuerst gebuzzert hat
+
 function showWinner() {
-  buzzArea.innerHTML = `
-    <h2>✅ Du hast gebuzzert!</h2>
-    <p>Warte auf die Entscheidung des Hosts …</p>
-  `;
+  statusMessage.textContent = "✅ Du hast gebuzzert!\nWarte auf die Entscheidung…";
+  statusMessage.className = "status-message winner";
+  statusMessage.style.display = "block";
+  buzzButton.disabled = true;
+  buzzButton.textContent = "⏳ Warte…";
 }
 
-// =======================================
-// ⏸️ TEAM-UI: ZU SPÄT
-// =======================================
-// 📍 Ort: buzzer-team.html
-//      Wird angezeigt, wenn ein anderes Team schneller war
 function showTooLate() {
-  buzzArea.innerHTML = `
-    <h2>⏸️ Zu spät</h2>
-    <p>Ein anderes Team war schneller.</p>
-  `;
+  statusMessage.textContent = "⏸️ Zu spät!\nEin anderes Team war schneller.";
+  statusMessage.className = "status-message waiting";
+  statusMessage.style.display = "block";
+  buzzButton.disabled = true;
+  buzzButton.textContent = "⏸ Warte…";
+}
+
+function showBlocked() {
+  statusMessage.textContent = "❌ PECH 300\nDiese Frage ist für euch vorbei.";
+  statusMessage.className = "status-message blocked";
+  statusMessage.style.display = "block";
+  buzzButton.disabled = true;
+  buzzButton.textContent = "🚫 Gesperrt";
+}
+
+function showReBuzzReady() {
+  statusMessage.textContent = "🔓 Nächste Chance!\nNeue Teams dürfen buzzern.";
+  statusMessage.className = "status-message waiting";
+  statusMessage.style.display = "block";
+  buzzButton.disabled = false;
+  buzzButton.textContent = "BUZZ";
 }
 
 // =======================================
-// 🔁 TEAM-UI: RE-BUZZ FREIGEGEBEN
+// 📡 BROADCAST LISTENER
 // =======================================
-// 📍 Ort: buzzer-team.html
-//      Zeigt nach ❌ Pech 300 den Buzzer erneut an
-function showReadyForReBuzz() {
-  buzzArea.innerHTML = `
-    <h2>Bereit zum Buzzern</h2>
-    <div id="buzzerWrapper">
-      <button id="buzzButton">BUZZ</button>
-    </div>
-  `;
-
-  const newBuzzButton = document.getElementById("buzzButton");
-
-  newBuzzButton.onclick = async () => {
-    const teamId = sessionStorage.getItem("teamId");
-    newBuzzButton.disabled = true;
-
-    await db.from("buzz_events").insert({
-      team_id: teamId,
-      question_id: Number(sessionStorage.getItem("currentQuestionIndex"))
-    });
-  };
-}
-loadTeams();
-// =======================================
-// 📡 TEAM-SEITE: BROADCAST-LISTENER
-// =======================================
-// 📍 Ort: buzzer-team.html
-//      Reagiert auf Host-Signale (lock / unlock)
-
-const stateChannel = db.channel("buzzer-state");
-
 stateChannel
-  // 🔒 GLOBALER LOCK: ein Team hat gebuzzert
+  // 🔒 LOCK: Ein Team hat gebuzzert
   .on("broadcast", { event: "lock" }, (payload) => {
-    // =======================================
-// 🧮 AKTUELLE FRAGE VOM HOST SPEICHERN
-// =======================================
-if (payload.payload.questionIndex !== undefined) {
-  sessionStorage.setItem(
-    "currentQuestionIndex",
-    payload.payload.questionIndex
-  );
-}
+    console.log("🔒 LOCK Signal empfangen:", payload);
+
+    // Aktuelle Frage speichern
+    if (payload.payload.questionIndex !== undefined) {
+      sessionStorage.setItem(
+        "currentQuestionIndex",
+        payload.payload.questionIndex
+      );
+    }
+
     const winnerId = payload.payload.winnerTeamId;
     const myTeamId = sessionStorage.getItem("teamId");
 
-    if (winnerId === myTeamId) {
+    // ❓ Bin ich der Gewinner?
+    if (String(winnerId) === String(myTeamId)) {
+      console.log("✅ ICH habe gewonnen!");
       showWinner();
     } else {
+      console.log("⏸️ Anderes Team hat gewonnen");
       showTooLate();
     }
   })
 
-  // 🔁 RE-BUZZ NACH ❌ PECH 300
+  // 🔓 UNLOCK: Re-Buzz oder nächste Frage
   .on("broadcast", { event: "unlock" }, (payload) => {
+    console.log("🔓 UNLOCK Signal empfangen:", payload);
+
+    // Aktuelle Frage speichern
+    if (payload.payload.questionIndex !== undefined) {
+      sessionStorage.setItem(
+        "currentQuestionIndex",
+        payload.payload.questionIndex
+      );
+    }
+
     const blockedTeams = payload.payload.blockedTeams || [];
     const myTeamId = sessionStorage.getItem("teamId");
 
-    if (blockedTeams.includes(myTeamId)) {
+    // 🔴 Bin ich geblockt?
+    const isBlocked = blockedTeams
+      .map(String)
+      .includes(String(myTeamId));
+
+    if (isBlocked) {
+      console.log("❌ Ich bin geblockt für diese Frage");
       showBlocked();
     } else {
-      showReadyForReBuzz();
+      console.log("✅ Ich darf buzzern!");
+      showReBuzzReady();
     }
   })
 
   .subscribe();
+
+// =======================================
+// 🎬 SEITE LADEN
+// =======================================
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("📱 Team-Seite geladen");
+  await loadTeams();
+});
+
 </script>
 
 </body>
