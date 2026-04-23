@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Point on Earth – Host</title>
+
+  <!-- Map-Styles (z. B. Leaflet) kommen später -->
+  <link rel="stylesheet" href="map-host.css" />
+</head>
+
+<body>
+
+  <!-- ================================ -->
+  <!-- 🌍 HEADER / MODUS-INFO -->
+  <!-- ================================ -->
+  <header id="mapHeader">
+    <h1>🌍 Point on Earth</h1>
+
+    <div id="roundInfo">
+      <span id="roundCounter">Runde 1 von 8</span>
+    </div>
+
+    <div id="questionBox">
+      <span id="questionText">
+        Gesucht: …
+      </span>
+    </div>
+  </header>
+
+
+  <!-- ================================ -->
+  <!-- 🗺️ KARTENBEREICH -->
+  <!-- ================================ -->
+  <main id="mapStage">
+
+    <!-- Leerer Container für die Karte -->
+    <div id="mapContainer">
+      <!-- Leaflet / Mapbox Map wird hier initialisiert -->
+    </div>
+
+    <!-- ================================ -->
+    <!-- 📊 ERGEBNISLISTE (nach Auflösung) -->
+    <!-- ================================ -->
+    <div id="resultPanel" class="hidden">
+      <h2>Ergebnis</h2>
+
+      <ul id="resultList">
+        <!--
+          🥇 Team A – 83 km → +2 Punkte
+          🥈 Team B – 142 km → +1 Punkt
+          Team C – 310 km → 0 Punkte
+        -->
+      </ul>
+    </div>
+
+  </main>
+
+
+  <!-- ================================ -->
+  <!-- 🎛️ HOST-BUTTON-LEISTE -->
+  <!-- ================================ -->
+  <footer id="hostControls">
+
+    <!-- Zustand: Ort sichtbar -->
+    <button id="btnShowPins" class="hidden">
+      Team‑Pins anzeigen
+    </button>
+
+    <!-- Zustand: Team‑Pins sichtbar -->
+    <button id="btnRevealTarget" class="hidden">
+      Ziel auflösen &amp; werten
+    </button>
+
+    <!-- Zustand: Runde abgeschlossen -->
+    <button id="btnNextRound" class="hidden">
+      Nächste Runde
+    </button>
+
+    <!-- Zustand: letzte Runde -->
+    <button id="btnFinishMapMode" class="hidden">
+      Map‑Modus auswerten
+    </button>
+
+  </footer>
+
+</body>
+</html>
