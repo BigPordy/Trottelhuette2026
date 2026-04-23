@@ -181,16 +181,39 @@ console.log("Realtime Buzz Event:", payload);
 
       winnerTeamId = payload.new.team_id;
 
-
 // =======================================
-// 📣 HOST-ANZEIGE: GEWINNER-TEAM
+// 📣 HOST-ANZEIGE: GEWINNER-TEAM MIT NAME
 // =======================================
-winnerBox.innerHTML = `
-  <div class="winner">
-    🔔 Team ${winnerTeamId} hat zuerst gebuzzert
-  </div>
-`;
+// 🔴 PROBLEM: winnerTeamId ist nur eine Nummer
+// 🟢 LÖSUNG: Team-Name aus der teams-Tabelle laden
 
+async function displayWinnerByName(teamId) {
+  // Team-Name aus DB laden
+  const { data: teamData } = await db
+    .from("teams")
+    .select("name")
+    .eq("id", teamId)
+    .single();
+  
+  if (teamData) {
+    winnerBox.innerHTML = `
+      <div class="winner">
+        🔔 Team <strong>${teamData.name}</strong> hat zuerst gebuzzert
+      </div>
+    `;
+  }
+}
+
+// Dann in der Realtime-Callback (Zeile 182-206), ändere Zeile 188-192:
+// ALT:
+// winnerBox.innerHTML = `
+//   <div class="winner">
+//     🔔 Team ${winnerTeamId} hat zuerst gebuzzert
+//   </div>
+// `;
+
+// NEU: Rufe die Funktion auf
+displayWinnerByName(winnerTeamId);
 
 // Bewertungsbuttons anzeigen
 decisionBox.style.display = "block";
