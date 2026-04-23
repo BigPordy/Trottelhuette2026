@@ -522,8 +522,25 @@ nextQuestionBtn.onclick = () => {
 // =======================================
 // 🏆 FINALE AUSWERTUNG ANZEIGEN
 // =======================================
-function showFinalScoreboard() {
+async function showFinalScoreboard() {
   log(`📊 Zeige Final-Scoreboard...`);
+
+  // ✅ PUNKTE AUS RUNDEN 1+2 UND BUZZER ZUSAMMENRECHNEN
+  const { data: teamScoresData } = await db
+    .from("team_scores")
+    .select("team_id, score");
+
+  const { data: buzzerScoresData } = await db
+    .from("buzzer_scores")
+    .select("team_id, score");
+
+  // Beide Tabellen zusammenrechnen
+  const totalScores = {};
+  teams.forEach(team => {
+    const roundScore = (teamScoresData || []).find(s => s.team_id === team.id)?.score || 0;
+    const buzzerScore = (buzzerScoresData || []).find(s => s.team_id === team.id)?.score || 0;
+    totalScores[team.id] = roundScore + buzzerScore;
+  });
 
   // UI umschalten
   questionDisplay.classList.add("hidden");
@@ -534,15 +551,15 @@ function showFinalScoreboard() {
 
   // Teams nach Punkten sortieren
   const sorted = [...teams].sort((a, b) => {
-    const scoreA = buzzerScores[a.id] || 0;
-    const scoreB = buzzerScores[b.id] || 0;
+    const scoreA = totalScores[a.id] || 0;
+    const scoreB = totalScores[b.id] || 0;
     return scoreB - scoreA;
   });
 
   // Jedes Team anzeigen
   sorted.forEach((team, index) => {
     const div = document.createElement("div");
-    const score = buzzerScores[team.id] || 0;
+    const score = totalScores[team.id] || 0;
     const isLast = index === sorted.length - 1;
 
     div.className = "row" + (isLast ? " gold" : "");
