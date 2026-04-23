@@ -12,7 +12,6 @@ const map = L.map("mapContainer", {
 // 🌍 KARTEN-KACHELN (OpenStreetMap)
 // ================================
 
-L.tileLayer(
  L.tileLayer(
   "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
   {
