@@ -3,8 +3,8 @@
 // ======================================
 
 const supabase = window.supabase.createClient(
-  "SUPABASE_URL",
-  "SUPABASE_ANON_KEY"
+  "https://havaoqxnxnlmyfbldyic.supabase.co",
+  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 
 // ======================================
