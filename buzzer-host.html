@@ -145,7 +145,10 @@
 <div id="decisionBox" class="section hidden">
   <p><strong>Wie soll ich die Antwort bewerten?</strong></p>
   <button id="correctBtn">✅ Richtig (+2 Punkte)</button>
-  <button id="wrongBtn">❌ Pech 300 (−1 Punkt)</button>
+  <button id="wrongBtn">❌ Falsch (−1 Punkt)</button>
+  <button id="skipQuestionBtn" class="secondary hidden"> ⏭️ Niemand weiß die Antwort (Frage überspringen)
+</button>
+
 </div>
 
 <!-- ===================================== -->
@@ -206,6 +209,7 @@ const scoreboard = document.getElementById("scoreboard");
 const finishBuzzerBtn = document.getElementById("finishBuzzerBtn");
 const debugBox = document.getElementById("debugBox");
 const debugText = document.getElementById("debugText");
+const skipQuestionBtn = document.getElementById("skipQuestionBtn");
 
 // =======================================
 // 🎮 GAME STATE - Globale Variablen
@@ -395,7 +399,8 @@ db.channel("buzz-events")
       // ✅ BEWERTUNGSBUTTONS ZEIGEN
       decisionBox.classList.remove("hidden");
       nextQuestionBox.classList.add("hidden");
-
+      skipQuestionBtn.classList.remove("hidden");
+      
       // 🔒 LOCK AN ALLE TEAMS SENDEN
       channel.send({
         type: "broadcast",
@@ -475,6 +480,23 @@ wrongBtn.onclick = () => {
   });
 
   log(`🔓 Re-Buzz freigegeben für andere Teams`);
+};
+  
+// =======================================
+// ⏭️ HOST-AKTION: FRAGE ÜBERSPRINGEN
+// =======================================
+skipQuestionBtn.onclick = () => {
+  log("⏭️ Frage ohne Punkte übersprungen");
+
+  winnerTeamId = null;
+  winnerTeamName = null;
+  blockedTeams = [];
+
+  decisionBox.classList.add("hidden");
+  skipQuestionBtn.classList.add("hidden");
+  nextQuestionBox.classList.remove("hidden");
+
+  updateNextQuestionButton();
 };
 
 // =======================================
