@@ -608,17 +608,7 @@ const baseScoreMap = {};
   questionDisplay.classList.add("hidden");
   scoreView.classList.remove("hidden");
   scoreboard.innerHTML = "";
-
-  // =======================================
-// 🔘 STANDARD-MODUS: NUR BUZZER-RUNDE AKTIV
-// =======================================
-
-showBuzzerOnlyBtn.classList.add("active");
-showBuzzerOnlyBtn.classList.remove("secondary");
-
-showTotalBtn.classList.remove("active");
-showTotalBtn.classList.add("secondary");
-  
+ 
   // Teams nach Gesamtpunkten sortieren
   const sortedTeams = [...teams].sort((a, b) => {
     const totalA = (baseScoreMap[a.id] || 0) + (buzzerScoreMap[a.id] || 0);
@@ -651,7 +641,7 @@ if (scoreboardMode === "buzzer") {
   // 🏆 LETZTEN PLATZ ERKENNEN
   // =======================================
   const isLast = index === sortedTeams.length - 1;
-  const trophy = isLast ? " 🏆 Dummenpärchen" : "";
+  const trophy = isLast ? "Dummenpärchen 2026 🏆" : "";
 
 // =======================================
   // 🏆 SCOREBOARD-ZEILE ERZEUGEN
