@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Point on Earth – Team</title>
+
+  <!-- Map Styles (z. B. Leaflet) kommen später -->
+  map-team.css
+</head>
+
+<body>
+
+  <!-- ================================ -->
+  <!-- 📱 HEADER / RUNDENINFO -->
+  <!-- ================================ -->
+  <header id="teamHeader">
+    <h1>🌍 Point on Earth</h1>
+
+    <div id="roundInfo">
+      <span id="roundCounter">Runde 1 von 8</span>
+    </div>
+
+    <div id="questionBox">
+      <span id="questionText">
+        Pinne: …
+      </span>
+    </div>
+  </header>
+
+
+  <!-- ================================ -->
+  <!-- 🗺️ KARTENBEREICH -->
+  <!-- ================================ -->
+  <main id="mapStage">
+
+    <!-- Leerer Kartencontainer -->
+    <div id="mapContainer">
+      <!-- Karte wird hier eingebunden -->
+    </div>
+
+  </main>
+
+
+  <!-- ================================ -->
+  <!-- ✅ AKTIONS- / STATUSBEREICH -->
+  <!-- ================================ -->
+  <footer id="teamControls">
+
+    <!-- Hinweis vor dem Pinnen -->
+    <div id="pinHint">
+      Tippe auf die Karte, um deinen Pin zu setzen.
+    </div>
+
+    <!-- Button: Pin absenden -->
+    <button id="btnSubmitPin" class="hidden">
+      Pin absenden
+    </button>
+
+    <!-- Status nach Absenden -->
+    <div id="waitMessage" class="hidden">
+      ✅ Pin gespeichert.<br />
+      Bitte warte auf die Auflösung.
+    </div>
+
+  </footer>
+
+</body>
+</html>
