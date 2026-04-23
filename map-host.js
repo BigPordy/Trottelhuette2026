@@ -1,23 +1,35 @@
+// ======================================
+// 🔧 SUPABASE INITIALISIERUNG
+// ======================================
+
 const supabase = window.supabase.createClient(
   "SUPABASE_URL",
   "SUPABASE_ANON_KEY"
 );
 
-// ================================
+// ======================================
+// 🧠 GLOBALER SPIELZUSTAND
+// ======================================
+
+let currentRoundId = 1;
+let currentPins = [];      // Team-Pins dieser Runde
+let currentTarget = null;  // Zielkoordinaten dieser Runde
+
+// ======================================
 // 🗺️ KARTE INITIALISIEREN
-// ================================
+// ======================================
 
 const map = L.map("mapContainer", {
-  center: [20, 0], // Welt-Zentrum
+  center: [20, 0],
   zoom: 2,
   zoomControl: false
 });
 
-// ================================
-// 🌍 KARTEN-KACHELN (OpenStreetMap)
-// ================================
+// ======================================
+// 🌍 KARTEN-KACHELN (OHNE LABELS)
+// ======================================
 
- L.tileLayer(
+L.tileLayer(
   "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
   {
     maxZoom: 18,
@@ -25,15 +37,16 @@ const map = L.map("mapContainer", {
   }
 ).addTo(map);
 
-// ================================
+// ======================================
 // 📍 MARKER-LAYER
-// ================================
+// ======================================
 
-// Team-Pins (alle Teams)
 const teamPinLayer = L.layerGroup().addTo(map);
-
-// Zielpunkt
 const targetLayer = L.layerGroup().addTo(map);
+
+// ======================================
+// 📐 DISTANZBERECHNUNG (HAVERSINE)
+// ======================================
 
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -48,96 +61,147 @@ function haversine(lat1, lon1, lat2, lon2) {
 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
-// ================================
-// 🎛️ HOST-BUTTONS REFERENZEN
-// ================================
+
+// ======================================
+// 🎛️ HOST-BUTTON-REFERENZEN
+// ======================================
 
 const btnShowPins = document.getElementById("btnShowPins");
 const btnRevealTarget = document.getElementById("btnRevealTarget");
 const btnNextRound = document.getElementById("btnNextRound");
 
-// ================================
+const resultPanel = document.getElementById("resultPanel");
+const resultList = document.getElementById("resultList");
+
+// ======================================
 // 🟡 KLICK 1: TEAM-PINS ANZEIGEN
-// ================================
+// ======================================
 
-btnShowPins.onclick = () => {
-  // Dummy-Daten (später aus der DB)
-const { data: pins } = await supabase
-  .from("map_pins")
-  .select("team_id, lat, lng")
-  .eq("round_id", currentRoundId);
+btnShowPins.onclick = async () => {
 
-pins.forEach(pin => {
-  L.marker([pin.lat, pin.lng])
-    .bindPopup(`Team ${pin.team_id}`)
-    .addTo(teamPinLayer);
-});
+  teamPinLayer.clearLayers();
+  resultPanel.classList.add("hidden");
+  resultList.innerHTML = "";
 
-  // Button-Zustände wechseln
+  const { data, error } = await supabase
+    .from("map_pins")
+    .select("team_id, lat, lng, submitted_at")
+    .eq("round_id", currentRoundId);
+
+  if (error) {
+    console.error("Fehler beim Laden der Pins:", error);
+    return;
+  }
+
+  currentPins = data || [];
+
+  currentPins.forEach(pin => {
+    L.marker([pin.lat, pin.lng])
+      .bindPopup(`Team ${pin.team_id}`)
+      .addTo(teamPinLayer);
+  });
+
   btnShowPins.classList.add("hidden");
   btnRevealTarget.classList.remove("hidden");
 };
-// ================================
-// 🔵 KLICK 2: ZIEL AUFLÖSEN
-// ================================
 
-btnRevealTarget.onclick = () => {
- const { data: round } = await supabase
-  .from("map_rounds")
-  .select("target_lat, target_lng")
-  .eq("id", currentRoundId)
-  .single();
+// ======================================
+// 🔵 KLICK 2: ZIEL AUFLÖSEN & WERTEN
+// ======================================
 
-const { target_lat, target_lng } = round;
+btnRevealTarget.onclick = async () => {
 
-L.circleMarker([target_lat, target_lng], {
-  radius: 10,
-  color: "#facc15",
-  fillOpacity: 1
-}).addTo(targetLayer);
+  // 🎯 Ziel laden
+  const { data: round, error } = await supabase
+    .from("map_rounds")
+    .select("target_lat, target_lng")
+    .eq("id", currentRoundId)
+    .single();
 
-  // Button-Zustände wechseln
-  btnRevealTarget.classList.add("hidden");
-  btnNextRound.classList.remove("hidden");
-};
-const results = pins.map(p => {
-  return {
+  if (error) {
+    console.error("Fehler beim Laden des Ziels:", error);
+    return;
+  }
+
+  currentTarget = round;
+
+  // 🎯 Ziel anzeigen
+  L.circleMarker([round.target_lat, round.target_lng], {
+    radius: 10,
+    color: "#facc15",
+    fillColor: "#facc15",
+    fillOpacity: 1
+  })
+    .bindPopup("🎯 Ziel")
+    .addTo(targetLayer);
+
+  // 📏 Entfernungen berechnen
+  const results = currentPins.map(p => ({
     team_id: p.team_id,
     distance: haversine(
       p.lat,
       p.lng,
-      target_lat,
-      target_lng
-    )
-  };
-});
+      round.target_lat,
+      round.target_lng
+    ),
+    submitted_at: p.submitted_at
+  }));
 
-results.sort((a, b) => a.distance - b.distance);
-results.forEach((r, index) => {
-  let points = 0;
-  if (index === 0) points = 2;
-  if (index === 1) points = 1;
+  // Sortieren: Distanz, dann Zeit
+  results.sort((a, b) =>
+    a.distance !== b.distance
+      ? a.distance - b.distance
+      : new Date(a.submitted_at) - new Date(b.submitted_at)
+  );
 
-  // speichern
-  supabase.from("map_scores").insert({
-    round_id: currentRoundId,
-    team_id: r.team_id,
-    points
+  // 🧮 Punkte vergeben & speichern
+  for (let i = 0; i < results.length; i++) {
+    const points = i === 0 ? 2 : i === 1 ? 1 : 0;
+
+    await supabase.from("map_scores").insert({
+      round_id: currentRoundId,
+      team_id: results[i].team_id,
+      points
+    });
+  }
+
+  // 📊 ERGEBNISLISTE (C4)
+  resultList.innerHTML = "";
+
+  results.forEach((r, index) => {
+    const points = index === 0 ? 2 : index === 1 ? 1 : 0;
+
+    const li = document.createElement("li");
+    li.textContent =
+      `${index + 1}. Team ${r.team_id} – ` +
+      `${Math.round(r.distance)} km → ${points} Punkte`;
+
+    resultList.appendChild(li);
   });
-});
 
-// ================================
+  resultPanel.classList.remove("hidden");
+
+  btnRevealTarget.classList.add("hidden");
+  btnNextRound.classList.remove("hidden");
+};
+
+// ======================================
 // 🔁 NÄCHSTE RUNDE
-// ================================
+// ======================================
 
 btnNextRound.onclick = () => {
   teamPinLayer.clearLayers();
   targetLayer.clearLayers();
 
+  currentPins = [];
+  currentTarget = null;
+
+  currentRoundId++;
+
+  resultPanel.classList.add("hidden");
+  resultList.innerHTML = "";
+
   btnNextRound.classList.add("hidden");
   btnShowPins.classList.remove("hidden");
 
-  // später:
-  // - Rundenzähler erhöhen
-  // - neue Aufgabe laden
 };
