@@ -162,7 +162,7 @@
 <!-- 🏁 FINAL-SCOREBOARD -->
 <!-- ===================================== -->
 <div id="scoreView" class="section hidden">
-  <h2>🏆 Final-Zwischenstand</h2>
+  <h2>🏆 Aktueller Zwischenstand</h2>
   <div style="margin-bottom:1rem;">
   <button id="showBuzzerOnlyBtn">🔔 Nur Buzzer-Runde</button>
   <button id="showTotalBtn" class="secondary">🏆 Gesamtspiel</button></div>
@@ -592,6 +592,17 @@ const baseScoreMap = {};
   scoreView.classList.remove("hidden");
   scoreboard.innerHTML = "";
 
+  // =======================================
+// 🔘 STANDARD-MODUS: NUR BUZZER-RUNDE AKTIV
+// =======================================
+scoreboardMode = "buzzer";
+
+showBuzzerOnlyBtn.classList.add("active");
+showBuzzerOnlyBtn.classList.remove("secondary");
+
+showTotalBtn.classList.remove("active");
+showTotalBtn.classList.add("secondary");
+  
   // Teams nach Gesamtpunkten sortieren
   const sortedTeams = [...teams].sort((a, b) => {
     const totalA = (baseScoreMap[a.id] || 0) + (buzzerScoreMap[a.id] || 0);
@@ -603,6 +614,7 @@ const baseScoreMap = {};
   // 🏆 AUSGABE JE TEAM
   // =======================================
   sortedTeams.forEach((team, index) => {
+    const isLast = index === sortedTeams.length - 1;
     const base = baseScoreMap[team.id] || 0;
     const buzzer = buzzerScoreMap[team.id] || 0;
     const total = base + buzzer;
@@ -625,10 +637,18 @@ if (scoreboardMode === "buzzer") {
   // =======================================
   const row = document.createElement("div");
   row.className = "row" + (index === 0 ? " gold" : "");
-  row.innerHTML = `
-    <span><strong>${index + 1}. ${team.name}</strong></span>
-    <span>${displayScore} Punkte<br><small>${detailText}</small></span>
-  `;
+row.innerHTML = `
+  <span>
+    <strong>
+      ${index + 1}. ${team.name}
+      ${isLast ? " 🏆 Dummenpärchen" : ""}
+    </strong>
+  </span>
+  <span>
+    ${displayScore} Punkte<br>
+    <small>${detailText}</small>
+  </span>
+`;
 
   scoreboard.appendChild(row);
 });
@@ -640,10 +660,32 @@ if (scoreboardMode === "buzzer") {
 // 🔘 SCOREBOARD UM­SCHALTEN
 // =======================================
 // =======================================
-// 🔘 SCOREBOARD: NUR BUZZER-RUNDE
+// 🔘 SCOREBOARD: NUR BUZZER-RUNDE (aktiv)
 // =======================================
 showBuzzerOnlyBtn.onclick = () => {
   scoreboardMode = "buzzer";
+
+  showBuzzerOnlyBtn.classList.add("active");
+  showBuzzerOnlyBtn.classList.remove("secondary");
+
+  showTotalBtn.classList.remove("active");
+  showTotalBtn.classList.add("secondary");
+
+  showFinalScoreboard();
+};
+
+// =======================================
+// 🔘 SCOREBOARD: GESAMTSPIEL (aktiv)
+// =======================================
+showTotalBtn.onclick = () => {
+  scoreboardMode = "total";
+
+  showTotalBtn.classList.add("active");
+  showTotalBtn.classList.remove("secondary");
+
+  showBuzzerOnlyBtn.classList.remove("active");
+  showBuzzerOnlyBtn.classList.add("secondary");
+
   showFinalScoreboard();
 };
 
