@@ -163,6 +163,9 @@
 <!-- ===================================== -->
 <div id="scoreView" class="section hidden">
   <h2>🏆 Final-Zwischenstand</h2>
+  <div style="margin-bottom:1rem;">
+  <button id="showBuzzerOnlyBtn">🔔 Nur Buzzer-Runde</button>
+  <button id="showTotalBtn" class="secondary">🏆 Gesamtspiel</button></div>
   <div class="hint">Nach Buzzer-Runde</div>
   <div id="scoreboard" class="scoreboard"></div>
   <button id="finishBuzzerBtn" class="secondary">⏹ Buzzer-Runde beenden</button>
@@ -209,7 +212,9 @@ const scoreboard = document.getElementById("scoreboard");
 const finishBuzzerBtn = document.getElementById("finishBuzzerBtn");
 const debugBox = document.getElementById("debugBox");
 const debugText = document.getElementById("debugText");
-const skipQuestionBtn = document.getElementById("skipQuestionBtn");
+const skipQuestionBtn = document.getElementById("skipQuestionBtn");  
+const showBuzzerOnlyBtn = document.getElementById("showBuzzerOnlyBtn");
+const showTotalBtn = document.getElementById("showTotalBtn");
 
 // =======================================
 // 🎮 GAME STATE - Globale Variablen
@@ -225,7 +230,7 @@ let buzzerScores = {};
 let winnerTeamId = null;
 let winnerTeamName = null;
 let blockedTeams = [];
-
+let scoreboardMode = "total"
 // =======================================
 // 🔨 HILFSFUNKTIONEN
 // =======================================
@@ -277,7 +282,8 @@ async function loadGameData() {
   // Teams initialisieren mit bestehenden Punkten
   teams.forEach(team => {
     const existingScore = (scoresData || []).find(s => s.team_id === team.id);
-    buzzerScores[team.id] = existingScore ? existingScore.score : 0;
+    buzzerScores[team.id] = 0;
+
   });
 
   log(`✅ Punkte aus Runden 1+2 geladen`);
@@ -547,55 +553,107 @@ nextQuestionBtn.onclick = () => {
 async function showFinalScoreboard() {
   log(`📊 Zeige Final-Scoreboard...`);
 
-  // ✅ PUNKTE AUS RUNDEN 1+2 UND BUZZER ZUSAMMENRECHNEN
-  const { data: teamScoresData } = await db
-    .from("team_scores")
-    .select("team_id, score");
+// =======================================
+// 🧮 BUZZER-RUNDEN-PUNKTE AUS DB LADEN
+// =======================================
+const { data: buzzerScoresData, error: buzzerErr } = await db
+  .from("buzzer_scores")
+  .select("team_id, score");
 
-  const { data: buzzerScoresData } = await db
-    .from("buzzer_scores")
-    .select("team_id, score");
-
-  // Beide Tabellen zusammenrechnen
-  const totalScores = {};
-  teams.forEach(team => {
-    const roundScore = (teamScoresData || []).find(s => s.team_id === team.id)?.score || 0;
-    const buzzerScore = (buzzerScoresData || []).find(s => s.team_id === team.id)?.score || 0;
-    totalScores[team.id] = roundScore + buzzerScore;
-  });
-
-  // UI umschalten
-  questionDisplay.classList.add("hidden");
-  scoreView.classList.remove("hidden");
-
-  // Scoreboard HTML generieren
-  scoreboard.innerHTML = "";
-
-  // Teams nach Punkten sortieren
-  const sorted = [...teams].sort((a, b) => {
-    const scoreA = totalScores[a.id] || 0;
-    const scoreB = totalScores[b.id] || 0;
-    return scoreB - scoreA;
-  });
-
-  // Jedes Team anzeigen
-  sorted.forEach((team, index) => {
-    const div = document.createElement("div");
-    const score = totalScores[team.id] || 0;
-    const isLast = index === sorted.length - 1;
-
-    div.className = "row" + (isLast ? " gold" : "");
-    div.innerHTML = `
-      <span><strong>${index + 1}. ${team.name}</strong></span>
-      <span>${isLast ? "Dummenpärchen 2026 🏆 " : ""}${score} Punkte</span>
-    `;
-
-    scoreboard.appendChild(div);
-  });
-
-  log(`✅ Finale Auswertung angezeigt`);
+if (buzzerErr) {
+  log("❌ Fehler beim Laden der Buzzer-Scores: " + buzzerErr.message);
+  return;
 }
 
+// =======================================
+// 🔗 Buzzer-Scores nach Team-ID mappen
+// =======================================
+const buzzerScoreMap = {};
+(buzzerScoresData || []).forEach(row => {
+  buzzerScoreMap[row.team_id] = row.score;
+});
+
+// =======================================
+// 🧮 GRUND-PUNKTE (RUNDE 1+2) LADEN
+// =======================================
+const { data: baseScores } = await db
+  .from("team_scores")
+  .select("team_id, score");
+
+const baseScoreMap = {};
+(baseScores || []).forEach(row => {
+  baseScoreMap[row.team_id] = row.score;
+});
+
+ // =======================================
+  // 📊 SCOREBOARD UI ZEIGEN
+  // =======================================
+  questionDisplay.classList.add("hidden");
+  scoreView.classList.remove("hidden");
+  scoreboard.innerHTML = "";
+
+  // Teams nach Gesamtpunkten sortieren
+  const sortedTeams = [...teams].sort((a, b) => {
+    const totalA = (baseScoreMap[a.id] || 0) + (buzzerScoreMap[a.id] || 0);
+    const totalB = (baseScoreMap[b.id] || 0) + (buzzerScoreMap[b.id] || 0);
+    return totalB - totalA;
+  });
+
+  // =======================================
+  // 🏆 AUSGABE JE TEAM
+  // =======================================
+  sortedTeams.forEach((team, index) => {
+    const base = baseScoreMap[team.id] || 0;
+    const buzzer = buzzerScoreMap[team.id] || 0;
+    const total = base + buzzer;
+// =======================================
+// 🧮 SCORE JE NACH ANZEIGE-MODUS
+// =======================================
+let displayScore = 0;
+let detailText = "";
+
+if (scoreboardMode === "buzzer") {
+  displayScore = buzzer;
+  detailText = "Nur Buzzer-Runde";
+} else {
+  displayScore = total;
+  detailText = `${base} + ${buzzer} Buzzer`;
+}
+
+// =======================================
+  // 🏆 SCOREBOARD-ZEILE ERZEUGEN
+  // =======================================
+  const row = document.createElement("div");
+  row.className = "row" + (index === 0 ? " gold" : "");
+  row.innerHTML = `
+    <span><strong>${index + 1}. ${team.name}</strong></span>
+    <span>${displayScore} Punkte<br><small>${detailText}</small></span>
+  `;
+
+  scoreboard.appendChild(row);
+});
+
+  log("✅ Finale Auswertung angezeigt");
+
+}
+// =======================================
+// 🔘 SCOREBOARD UM­SCHALTEN
+// =======================================
+// =======================================
+// 🔘 SCOREBOARD: NUR BUZZER-RUNDE
+// =======================================
+showBuzzerOnlyBtn.onclick = () => {
+  scoreboardMode = "buzzer";
+  showFinalScoreboard();
+};
+
+// =======================================
+// 🔘 SCOREBOARD: GESAMTSPIEL
+// =======================================
+showTotalBtn.onclick = () => {
+  scoreboardMode = "total";
+  showFinalScoreboard();
+};
 // =======================================
 // 💾 BUZZER-RUNDE ABSCHLIESSEN + SPEICHERN
 // =======================================
