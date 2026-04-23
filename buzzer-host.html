@@ -11,42 +11,103 @@
       background: #111;
       color: white;
       padding: 2rem;
+      margin: 0;
     }
+
+    h1 { margin: 0.2rem 0; }
+    .hint { opacity: 0.7; margin-bottom: 1rem; }
+
+    .section {
+      background: #1f2937;
+      border-radius: 14px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      padding: 0.45rem 1.2rem;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button.secondary { background: #475569; }
+    button.active { background: #16a34a; }
+    button:disabled { background: #666; cursor: not-allowed; }
+
+    select {
+      padding: 0.35rem;
+      border-radius: 6px;
+      background: #1f2937;
+      color: white;
+      border: 1px solid #475569;
+    }
+
     .winner {
       margin-top: 2rem;
       font-size: 2rem;
       padding: 1.5rem;
       background: #14532d;
       border-radius: 12px;
+      text-align: center;
     }
+
     #decisionBox button {
-  font-size: 1.4rem;
-  padding: 1rem 2rem;
-  margin-right: 1rem;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
+      font-size: 1.4rem;
+      padding: 1rem 2rem;
+      margin-right: 1rem;
+      margin-top: 1rem;
+    }
 
-#correctBtn {
-  background: #16a34a;
-  color: white;
-}
+    #correctBtn { background: #16a34a; }
+    #wrongBtn { background: #dc2626; }
 
-#wrongBtn {
-  background: #dc2626;
-  color: white;
-}
+    .scoreboard .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      padding: 0.6rem 1rem;
+      border-bottom: 2px solid #334155;
+    }
+
+    .scoreboard .gold {
+      background: linear-gradient(135deg, #8f7a00, #d4af37, #bfa200);
+      color: #1a1a1a;
+      font-weight: 800;
+    }
+
+    .hidden { display: none; }
+
+    #questionDisplay {
+      font-size: 1.4rem;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #0f172a;
+      border-radius: 8px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
+
 <body>
 
 <!-- ===================================== -->
 <!-- 📘 BUZZER-RUNDEN-EINLEITUNG -->
 <!-- ===================================== -->
-<div id="introBox">
+<div id="introBox" class="section">
   <h2>🔊 Buzzer‑Runde</h2>
-
   <p><strong>So funktioniert die Runde:</strong></p>
   <ul>
     <li>Es gibt <strong>genau 15 Fragen</strong>.</li>
@@ -56,174 +117,293 @@
     <li>❌ Falsch → −1 Punkt</li>
     <li>Nach falscher Antwort dürfen die anderen Teams erneut buzzern.</li>
   </ul>
-
   <button id="startBuzzerBtn">▶ Buzzer‑Runde starten</button>
 </div>
-  
+
 <h1>🎛️ Buzzer – Host</h1>
 
+<!-- ===================================== -->
+<!-- 📊 AKTUELLE FRAGE ANZEIGEN -->
+<!-- ===================================== -->
+<div id="questionDisplay" class="hidden">
+  <span id="questionText"></span>
+</div>
+
+<!-- ===================================== -->
+<!-- 📈 STATUS UND FORTSCHRITT -->
+<!-- ===================================== -->
 <p>Status: <strong id="status">Warte auf Buzz …</strong></p>
 
+<!-- ===================================== -->
+<!-- 🏆 GEWINNER-ANZEIGE -->
+<!-- ===================================== -->
 <div id="winnerBox"></div>
-<div id="decisionBox" style="display:none; margin-top:2rem;">
-  <button id="correctBtn">✅ Richtig</button>
-  <button id="wrongBtn">❌ Pech 300</button>
+
+<!-- ===================================== -->
+<!-- ✅❌ BEWERTUNGSBUTTONS -->
+<!-- ===================================== -->
+<div id="decisionBox" class="section hidden">
+  <p><strong>Wie soll ich die Antwort bewerten?</strong></p>
+  <button id="correctBtn">✅ Richtig (+2 Punkte)</button>
+  <button id="wrongBtn">❌ Pech 300 (−1 Punkt)</button>
 </div>
 
 <!-- ===================================== -->
-<!-- ⏭️ NÄCHSTE FRAGE FREIGEBEN (HOST) -->
+<!-- ⏭️ NÄCHSTE FRAGE / RUNDE ABSCHLIESSEN -->
 <!-- ===================================== -->
-<div id="nextQuestionBox" style="display:none; margin-top:1.5rem;">
+<div id="nextQuestionBox" class="section hidden">
   <button id="nextQuestionBtn"></button>
 </div>
-  
+
+<!-- ===================================== -->
+<!-- 🏁 FINAL-SCOREBOARD -->
+<!-- ===================================== -->
+<div id="scoreView" class="section hidden">
+  <h2>🏆 Final-Zwischenstand</h2>
+  <div class="hint">Nach Buzzer-Runde</div>
+  <div id="scoreboard" class="scoreboard"></div>
+  <button id="finishBuzzerBtn" class="secondary">⏹ Buzzer-Runde beenden</button>
+</div>
+
+<!-- ===================================== -->
+<!-- 📋 DEBUG-KONSOLE (Optional) -->
+<!-- ===================================== -->
+<div id="debugBox" class="section hidden" style="font-size: 0.8rem; max-height: 300px; overflow-y: auto;">
+  <strong>DEBUG:</strong>
+  <div id="debugText"></div>
+</div>
+
 <script>
-// Supabase + Channel
-  const db = window.supabase.createClient(
+// =======================================
+// 🔧 SUPABASE INITIALISIERUNG
+// =======================================
+const db = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
-  
-// ✅ Globaler Channel für Lock-Signale
+
+// =======================================
+// 📡 REALTIME CHANNEL FÜR BROADCASTS
+// =======================================
 const channel = db.channel("buzzer-state");
-// DOM-Refs
+
+// =======================================
+// 🎯 DOM-REFERENZEN
+// =======================================
+const introBox = document.getElementById("introBox");
+const startBuzzerBtn = document.getElementById("startBuzzerBtn");
+const questionDisplay = document.getElementById("questionDisplay");
+const questionText = document.getElementById("questionText");
+const statusEl = document.getElementById("status");
+const winnerBox = document.getElementById("winnerBox");
 const decisionBox = document.getElementById("decisionBox");
 const correctBtn = document.getElementById("correctBtn");
 const wrongBtn = document.getElementById("wrongBtn");
-const startBuzzerBtn = document.getElementById("startBuzzerBtn");
-const statusEl = document.getElementById("status");
-const winnerBox = document.getElementById("winnerBox");
-const introBox = document.getElementById("introBox");
 const nextQuestionBox = document.getElementById("nextQuestionBox");
 const nextQuestionBtn = document.getElementById("nextQuestionBtn");
-
-
-  // =======================================
-// ▶ START DER BUZZER-RUNDE (EINLEITUNG)
-// =======================================
-startBuzzerBtn.onclick = () => {
-  introBox.style.display = "none";
-
-  statusEl.textContent =
-    `Frage ${currentQuestionIndex} von ${TOTAL_QUESTIONS}`;
+const scoreView = document.getElementById("scoreView");
+const scoreboard = document.getElementById("scoreboard");
+const finishBuzzerBtn = document.getElementById("finishBuzzerBtn");
+const debugBox = document.getElementById("debugBox");
+const debugText = document.getElementById("debugText");
 
 // =======================================
-// 📝 AKTUELLE FRAGE FÜR TEAMS SPEICHERN
+// 🎮 GAME STATE - Globale Variablen
 // =======================================
-// Teams lesen diese Info beim Buzz
-sessionStorage.setItem(
-  "currentQuestionIndex",
-  currentQuestionIndex
-);
-// =======================================
-// 🔓 BUZZER FREIGEBEN + AKTUELLE FRAGE SENDEN
-// =======================================
-channel.send({
-  event: "unlock",
-  payload: {
-    blockedTeams: blockedTeams,
-    questionIndex: currentQuestionIndex
-  }
-});
+const TOTAL_QUESTIONS = 15;
+let currentQuestionIndex = 1;
+let currentQuestion = null;
 
-};
-  
-// ✅ Nur der erste Buzz zählt
+let teams = [];
+let questions = [];
+let buzzerScores = {};
+
 let winnerTeamId = null;
+let winnerTeamName = null;
 let blockedTeams = [];
 
 // =======================================
-// 📊 BUZZER-RUNDENSTATUS (FRAGEN + PUNKTE)
+// 🔨 HILFSFUNKTIONEN
 // =======================================
-// 📍 Ort: buzzer-host.html
-//      Globaler Zustand für den gesamten Buzzer-Modus
 
-const TOTAL_QUESTIONS = 15;
-let currentQuestionIndex = 1;
-  
-// =======================================
-// 🧮 BUTTON-TEXT: NÄCHSTE FRAGE
-// =======================================
-function updateNextQuestionButton() {
-  nextQuestionBtn.textContent =
-    `▶ Weiter mit Frage ${currentQuestionIndex} / ${TOTAL_QUESTIONS}`;
+// Debug-Ausgabe in der Konsole
+function log(msg) {
+  console.log(msg);
+  debugText.innerHTML += `<div>${msg}</div>`;
 }
-  
-// Lokaler Punktezähler für diese Buzzer-Runde
-// Struktur: { [teamId]: punkte }
-let buzzerScores = {};
-  
-  // Realtime-Handler
-// ✅ EIN einziges Realtime-Abo auf buzz_events
+
+// Fragen und Teams aus der DB laden
+async function loadGameData() {
+  log("⏳ Lade Fragen und Teams...");
+
+  // ✅ FRAGEN AUS BUZZER_QUESTIONS LADEN
+  const { data: questionsData, error: qError } = await db
+    .from("buzzer_questions")
+    .select("*")
+    .order("order_index", { ascending: true })
+    .limit(TOTAL_QUESTIONS);
+
+  if (qError) {
+    log("❌ Fehler beim Laden der Fragen: " + qError.message);
+    return false;
+  }
+
+  questions = questionsData || [];
+  log(`✅ ${questions.length} Fragen geladen`);
+
+  // ✅ TEAMS AUS TEAMS TABELLE LADEN
+  const { data: teamsData, error: tError } = await db
+    .from("teams")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (tError) {
+    log("❌ Fehler beim Laden der Teams: " + tError.message);
+    return false;
+  }
+
+  teams = teamsData || [];
+  log(`✅ ${teams.length} Teams geladen`);
+
+  // ✅ TEAM_SCORES LADEN (für Punkte aus Runden 1+2)
+  const { data: scoresData } = await db
+    .from("team_scores")
+    .select("team_id, score");
+
+  // Teams initialisieren mit bestehenden Punkten
+  teams.forEach(team => {
+    const existingScore = (scoresData || []).find(s => s.team_id === team.id);
+    buzzerScores[team.id] = existingScore ? existingScore.score : 0;
+  });
+
+  log(`✅ Punkte aus Runden 1+2 geladen`);
+  return true;
+}
+
+// Aktuelle Frage aktualisieren
+function updateCurrentQuestion() {
+  if (currentQuestionIndex > TOTAL_QUESTIONS) {
+    currentQuestion = null;
+    return;
+  }
+
+  currentQuestion = questions[currentQuestionIndex - 1];
+  if (currentQuestion) {
+    questionText.textContent = `Frage ${currentQuestionIndex}: ${currentQuestion.question}`;
+  }
+}
+
+// Status-Zeile aktualisieren
+function updateStatus() {
+  statusEl.textContent = `Frage ${currentQuestionIndex} von ${TOTAL_QUESTIONS}`;
+}
+
+// Nächste Frage Button Text aktualisieren
+function updateNextQuestionButton() {
+  if (currentQuestionIndex >= TOTAL_QUESTIONS) {
+    nextQuestionBtn.textContent = "🏁 Zur Auswertung";
+  } else {
+    nextQuestionBtn.textContent = `▶ Weiter zu Frage ${currentQuestionIndex + 1}`;
+  }
+}
+
+// Team-Name aus ID holen
+function getTeamName(teamId) {
+  const team = teams.find(t => t.id === teamId);
+  return team ? team.name : `Team ${teamId}`;
+}
+
+// =======================================
+// 🎬 BUZZER-RUNDE STARTEN
+// =======================================
+startBuzzerBtn.onclick = async () => {
+  log("🚀 Buzzer-Runde wird gestartet...");
+
+  // Daten laden
+  const success = await loadGameData();
+  if (!success) {
+    alert("❌ Fehler beim Laden der Spieldaten!");
+    return;
+  }
+
+  // UI umschalten
+  introBox.style.display = "none";
+  questionDisplay.classList.remove("hidden");
+  nextQuestionBox.classList.add("hidden");
+  decisionBox.classList.add("hidden");
+  winnerBox.innerHTML = "";
+
+  // Erste Frage anzeigen
+  currentQuestionIndex = 1;
+  updateCurrentQuestion();
+  updateStatus();
+  updateNextQuestionButton();
+
+  log("✅ Runde gestartet! Warte auf Buzzer...");
+
+  // BROADCAST: Buzzer für Frage 1 freigeben
+  channel.send({
+    type: "broadcast",
+    event: "unlock",
+    payload: {
+      blockedTeams: [],
+      questionIndex: currentQuestionIndex
+    }
+  });
+};
+
+// =======================================
+// 📡 REALTIME: BUZZ EVENT EMPFANGEN
+// =======================================
 db.channel("buzz-events")
   .on(
     "postgres_changes",
     {
       event: "INSERT",
       schema: "public",
-      table: "buzz_events",
-      filter: null
+      table: "buzz_events"
     },
     async (payload) => {
+      log(`🔔 Buzz empfangen von Team ${payload.new.team_id}`);
 
-// ✅ DEBUG: Realtime-Event angekommen
-console.log("Realtime Buzz Event:", payload);
+      // ❓ Gehört dieser Buzz zur aktuellen Frage?
+      if (payload.new.question_id !== currentQuestionIndex) {
+        log(`⏭️ Buzz ignoriert (andere Frage)`);
+        return;
+      }
 
-      // =======================================
-      // ❓ BUZZ GEHÖRT ZUR AKTUELLEN FRAGE?
-      // =======================================
-      if (payload.new.question_id !== currentQuestionIndex) return;
-      
-      // =======================================
       // 🔒 NUR DER ERSTE BUZZ ZÄHLT
-      // =======================================
-      if (winnerTeamId) return;
+      if (winnerTeamId) {
+        log(`⏸️ Zu spät - Team hat schon gebuzzert`);
+        return;
+      }
 
+      // ✅ GEWINNER MERKEN
       winnerTeamId = payload.new.team_id;
+      winnerTeamName = getTeamName(winnerTeamId);
 
-// =======================================
-// 📣 HOST-ANZEIGE: GEWINNER-TEAM MIT NAME
-// =======================================
-// 🔴 PROBLEM: winnerTeamId ist nur eine Nummer
-// 🟢 LÖSUNG: Team-Name aus der teams-Tabelle laden
+      log(`✅ GEWINNER: ${winnerTeamName}`);
 
-async function displayWinnerByName(teamId) {
-  // Team-Name aus DB laden
-  const { data: teamData } = await db
-    .from("teams")
-    .select("name")
-    .eq("id", teamId)
-    .single();
-  
-  if (teamData) {
-    winnerBox.innerHTML = `
-      <div class="winner">
-        🔔 Team <strong>${teamData.name}</strong> hat zuerst gebuzzert
-      </div>
-    `;
-  }
-}
+      // 📣 HOST-ANZEIGE: GEWINNER-TEAM
+      winnerBox.innerHTML = `
+        <div class="winner">
+          🔔 <strong>${winnerTeamName}</strong> hat gebuzzert!
+          <br><small>Wartet auf deine Bewertung...</small>
+        </div>
+      `;
 
-// Dann in der Realtime-Callback (Zeile 182-206), ändere Zeile 188-192:
-// ALT:
-// winnerBox.innerHTML = `
-//   <div class="winner">
-//     🔔 Team ${winnerTeamId} hat zuerst gebuzzert
-//   </div>
-// `;
+      // ✅ BEWERTUNGSBUTTONS ZEIGEN
+      decisionBox.classList.remove("hidden");
+      nextQuestionBox.classList.add("hidden");
 
-// NEU: Rufe die Funktion auf
-displayWinnerByName(winnerTeamId);
-
-// Bewertungsbuttons anzeigen
-decisionBox.style.display = "block";
-
-      // ✅ GLOBALEN LOCK AN ALLE TEAMS SENDEN
+      // 🔒 LOCK AN ALLE TEAMS SENDEN
       channel.send({
         type: "broadcast",
         event: "lock",
         payload: {
-          winnerTeamId: winnerTeamId
+          winnerTeamId: winnerTeamId,
+          winnerTeamName: winnerTeamName,
+          questionIndex: currentQuestionIndex
         }
       });
     }
@@ -233,174 +413,186 @@ decisionBox.style.display = "block";
 // =======================================
 // ✅ HOST-BEWERTUNG: RICHTIG (+2 PUNKTE)
 // =======================================
-// 📍 Ort: buzzer-host.html
 correctBtn.onclick = () => {
+  log(`✅ Richtig! ${winnerTeamName} bekommt +2 Punkte`);
 
-  decisionBox.style.display = "none";
+  // Punkte addieren
+  buzzerScores[winnerTeamId] += 2;
 
-  // Punkte für das Gewinner-Team addieren
-  buzzerScores[winnerTeamId] = (buzzerScores[winnerTeamId] || 0) + 2;
-
-  document.getElementById("winnerBox").innerHTML += `
-    <div style="margin-top:1rem; font-size:1.6rem;">
-      ✅ Richtig!
+  // Feedback anzeigen
+  winnerBox.innerHTML = `
+    <div class="winner">
+      ✅ <strong>${winnerTeamName}: +2 Punkte</strong>
+      <br><small>Neue Summe: ${buzzerScores[winnerTeamId]} Punkte</small>
     </div>
   `;
 
-// ⏭️ Nächste Frage vorbereiten
-nextQuestionBox.style.display = "block";
-updateNextQuestionButton();
-}
-  
+  // UI aktualisieren
+  decisionBox.classList.add("hidden");
+  nextQuestionBox.classList.remove("hidden");
+  updateNextQuestionButton();
+};
+
 // =======================================
-// 🏁 BUZZER-RUNDE BEENDEN
+// ❌ HOST-BEWERTUNG: PECH 300 (−1 PUNKT)
 // =======================================
-// 📍 Ort: buzzer-host.html
-function endBuzzerRound() {
-
-  document.getElementById("status").textContent =
-    "Buzzer-Runde beendet";
-
-  let summary = "<h2>🏁 Buzzer-Punkte</h2><ul>";
-
-  for (const teamId in buzzerScores) {
-    summary += `<li>${teamId}: ${buzzerScores[teamId]} Punkte</li>`;
-  }
-
-  summary += "</ul><p>Punkte können jetzt zum Gesamtspiel addiert werden.</p>";
-
-document.getElementById("winnerBox").innerHTML = `
-  ${summary}
-  <br>
-  <button id="saveScoresBtn">✅ Punkte ins Spiel übernehmen</button>
-`;
-
-  // 👉 Nächster Schritt: Scores in team_scores übernehmen
-}
-  
-// =======================================
-// 🧮 BUZZER-SCORES INS HAUPTSPIEL ÜBERNEHMEN
-// =======================================
-// 📍 Ort: buzzer-host.html
-//      Addiert die Buzzer-Punkte zu team_scores
-async function saveBuzzerScoresToGame() {
-
-  const updates = [];
-
-  for (const teamId in buzzerScores) {
-    updates.push({
-      team_id: teamId,
-      score: buzzerScores[teamId], // wird addiert (siehe unten)
-      updated_at: new Date().toISOString()
-    });
-  }
-
-  // Alle Scores holen
-  const { data: existingScores } = await db
-    .from("team_scores")
-    .select("team_id, score");
-
-  // Bestehende Scores mergen
-  const finalScores = updates.map(update => {
-    const existing = existingScores.find(e => e.team_id === update.team_id);
-    return {
-      team_id: update.team_id,
-      score: (existing?.score || 0) + update.score,
-      updated_at: update.updated_at
-    };
-  });
-
-  // In DB schreiben
-  await db.from("team_scores").upsert(finalScores);
-}
-  
-// =======================================
-// ❌ HOST-BEWERTUNG: PECH 300 (-1 PUNKT)
-// =======================================
-// 📍 Ort: buzzer-host.html
 wrongBtn.onclick = () => {
+  log(`❌ Pech 300! ${winnerTeamName} bekommt -1 Punkt`);
 
-  decisionBox.style.display = "none";
+  // Punkte abziehen
+  buzzerScores[winnerTeamId] -= 1;
 
-  // Punktabzug
-  buzzerScores[winnerTeamId] = (buzzerScores[winnerTeamId] || 0) - 1;
-
-  // Team für diese Frage sperren
+  // Team sperren
   blockedTeams.push(winnerTeamId);
+  log(`🔒 ${winnerTeamName} ist für diese Frage gesperrt`);
 
-  // Gewinner zurücksetzen
+  // Feedback anzeigen
+  winnerBox.innerHTML = `
+    <div class="winner" style="background: #7f1d1d;">
+      ❌ <strong>${winnerTeamName}: -1 Punkt</strong>
+      <br><small>Neue Summe: ${buzzerScores[winnerTeamId]} Punkte</small>
+      <br><strong>⏳ Andere Teams dürfen jetzt buzzern!</strong>
+    </div>
+  `;
+
+  // Gewinner zurücksetzen für re-buzz
   winnerTeamId = null;
+  winnerTeamName = null;
 
-  // 🔁 Re-Buzz für verbleibende Teams freigeben
+  // UI aktualisieren
+  decisionBox.classList.add("hidden");
+  nextQuestionBox.classList.remove("hidden");
+  updateNextQuestionButton();
+
+  // 🔁 RE-BUZZ FREIGEBEN
   channel.send({
     type: "broadcast",
     event: "unlock",
     payload: {
-    blockedTeams: blockedTeams,
-    questionIndex: currentQuestionIndex
-
+      blockedTeams: blockedTeams,
+      questionIndex: currentQuestionIndex
     }
   });
-  
-// ⏭️ Nächste Frage vorbereiten
-nextQuestionBox.style.display = "block";
-updateNextQuestionButton();
+
+  log(`🔓 Re-Buzz freigegeben für andere Teams`);
 };
 
 // =======================================
-// ⏭️ FRAGE ABSCHLIESSEN
+// ⏭️ NÄCHSTE FRAGE / FINALE ANZEIGEN
 // =======================================
-function finishQuestion() {
+nextQuestionBtn.onclick = () => {
+  log(`⏭️ Frage ${currentQuestionIndex} beendet`);
 
-  // Zustand für nächste Frage zurücksetzen
+  // Zustand zurücksetzen
   winnerTeamId = null;
+  winnerTeamName = null;
   blockedTeams = [];
-  decisionBox.style.display = "none";
-  
+  decisionBox.classList.add("hidden");
+  nextQuestionBox.classList.add("hidden");
+  winnerBox.innerHTML = "";
+
+  // Nächste Frage
   currentQuestionIndex++;
 
-
-  // =======================================
-  // 📝 AKTUELLE FRAGE FÜR TEAMS SPEICHERN
-  // =======================================
-  sessionStorage.setItem(
-    "currentQuestionIndex",
-    currentQuestionIndex
-  );
-
-  
-  // 🚨 NUR HIER: nach Frage 15 Gesamtauswertung
+  // 🚨 ALLE 15 FRAGEN VORBEI?
   if (currentQuestionIndex > TOTAL_QUESTIONS) {
-    endBuzzerRound();
+    log(`🏁 ALLE FRAGEN BEENDET! Zeige Finale Auswertung...`);
+    showFinalScoreboard();
     return;
   }
 
-  // ✅ Normalfall: nächste Frage vorbereiten
-  statusEl.textContent =
-    `Frage ${currentQuestionIndex} von ${TOTAL_QUESTIONS}`;
+  // ✅ Normalfall: Nächste Frage anzeigen
+  updateCurrentQuestion();
+  updateStatus();
+  updateNextQuestionButton();
 
-  winnerBox.innerHTML = "<p>Bereit für die nächste Frage.</p>";
+  log(`📍 Frage ${currentQuestionIndex} bereit`);
+
+  // 🔓 BUZZER FREIGEBEN
+  channel.send({
+    type: "broadcast",
+    event: "unlock",
+    payload: {
+      blockedTeams: [],
+      questionIndex: currentQuestionIndex
+    }
+  });
+};
+
+// =======================================
+// 🏆 FINALE AUSWERTUNG ANZEIGEN
+// =======================================
+function showFinalScoreboard() {
+  log(`📊 Zeige Final-Scoreboard...`);
+
+  // UI umschalten
+  questionDisplay.classList.add("hidden");
+  scoreView.classList.remove("hidden");
+
+  // Scoreboard HTML generieren
+  scoreboard.innerHTML = "";
+
+  // Teams nach Punkten sortieren
+  const sorted = [...teams].sort((a, b) => {
+    const scoreA = buzzerScores[a.id] || 0;
+    const scoreB = buzzerScores[b.id] || 0;
+    return scoreB - scoreA;
+  });
+
+  // Jedes Team anzeigen
+  sorted.forEach((team, index) => {
+    const div = document.createElement("div");
+    const score = buzzerScores[team.id] || 0;
+    const isLast = index === sorted.length - 1;
+
+    div.className = "row" + (isLast ? " gold" : "");
+    div.innerHTML = `
+      <span><strong>${index + 1}. ${team.name}</strong></span>
+      <span>${isLast ? "Dummenpärchen 2026 🏆 " : ""}${score} Punkte</span>
+    `;
+
+    scoreboard.appendChild(div);
+  });
+
+  log(`✅ Finale Auswertung angezeigt`);
 }
 
 // =======================================
-// ✅ HOST-AKTION: SCORES SPEICHERN
+// 💾 BUZZER-RUNDE ABSCHLIESSEN + SPEICHERN
 // =======================================
-// 📍 Ort: buzzer-host.html
-document.addEventListener("click", async (e) => {
-  if (e.target.id === "saveScoresBtn") {
-    e.target.disabled = true;
-    await saveBuzzerScoresToGame();
-    e.target.textContent = "✅ Punkte gespeichert";
+finishBuzzerBtn.onclick = async () => {
+  log(`💾 Speichere Buzzer-Punkte in DB...`);
+
+  const payload = teams.map(team => ({
+    team_id: team.id,
+    score: buzzerScores[team.id] || 0,
+    updated_at: new Date().toISOString()
+  }));
+
+  log(`Payload: ${JSON.stringify(payload)}`);
+
+  const { error } = await db.from("team_scores").upsert(payload);
+
+  if (error) {
+    log(`❌ Fehler beim Speichern: ${error.message}`);
+    alert("❌ Fehler beim Speichern!");
+    return;
   }
-});
-  
-// =======================================
-// ▶ HOST-AKTION: NÄCHSTE FRAGE STARTEN
-// =======================================
-nextQuestionBtn.onclick = () => {
-  nextQuestionBox.style.display = "none";
-  finishQuestion();
+
+  log(`✅ Punkte gespeichert!`);
+  alert("✅ Buzzer-Runde erfolgreich abgeschlossen und Punkte gespeichert!");
+
+  // Optional: Zurück zur Einleitung
+  // location.reload();
 };
+
+// =======================================
+// 🎬 SEITE LADEN
+// =======================================
+document.addEventListener("DOMContentLoaded", () => {
+  log("🚀 Host-Seite geladen");
+});
+
 </script>
 
 </body>
