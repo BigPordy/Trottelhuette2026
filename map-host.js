@@ -13,7 +13,13 @@ const map = L.map("mapContainer", {
 // ================================
 
 L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+ L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+  {
+    maxZoom: 18,
+    attribution: "© OpenStreetMap & Carto"
+  }
+).addTo(map);,
   {
     maxZoom: 19,
     attribution: "© OpenStreetMap & Carto"
