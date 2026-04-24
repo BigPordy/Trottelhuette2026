@@ -40,11 +40,6 @@ async function loadRound(roundId) {
   document.getElementById("questionText").textContent =
     `Pinne: ${data.question}`;
 }
-// ================================
-// 🧑‍🤝‍🧑 TEAM-AUSWAHL – ZUSTAND
-// ================================
-
-let currentTeamId = null;
 
 // ================================
 // 🧑‍🤝‍🧑 TEAMS AUS DB LADEN
