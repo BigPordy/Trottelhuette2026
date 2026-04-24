@@ -2,7 +2,7 @@
 // 🔧 SUPABASE INITIALISIERUNG
 // ======================================
 
-const supabase = window.supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
@@ -83,7 +83,7 @@ btnShowPins.onclick = async () => {
   resultPanel.classList.add("hidden");
   resultList.innerHTML = "";
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from("map_pins")
     .select("team_id, lat, lng, submitted_at")
     .eq("round_id", currentRoundId);
@@ -112,7 +112,7 @@ btnShowPins.onclick = async () => {
 btnRevealTarget.onclick = async () => {
 
   // 🎯 Ziel laden
-  const { data: round, error } = await supabase
+  const { data: round, error } = await supabaseClient
     .from("map_rounds")
     .select("target_lat, target_lng")
     .eq("id", currentRoundId)
@@ -158,7 +158,7 @@ btnRevealTarget.onclick = async () => {
   for (let i = 0; i < results.length; i++) {
     const points = i === 0 ? 2 : i === 1 ? 1 : 0;
 
-    await supabase.from("map_scores").insert({
+    await supabaseClient.from("map_scores").insert({
       round_id: currentRoundId,
       team_id: results[i].team_id,
       points
