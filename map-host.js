@@ -427,4 +427,3 @@ btnShowTotalScore.onclick = async () => {
 
   btnShowTotalScore.classList.add("hidden");
 };
-}
