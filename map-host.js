@@ -14,7 +14,7 @@ async function loadRound(roundId) {
   const { data, error } = await supabaseClient
     .from("map_rounds")
     .select("id, round_index, question, target_lat, target_lng")
-    .eq("id", roundId)
+    .eq("round_index", roundId)
     .single();
 
   if (error) {
