@@ -32,7 +32,8 @@ let currentRoundId = 1;
 let currentPins = [];      // Team-Pins dieser Runde
 let currentTarget = null;  // Zielkoordinaten dieser Runde
 let teamMap = {}; // team_id → team_name
-
+let currentRoundId = 1;
+let currentRound = null; // enthält question, target_lat/lng
 
 // ======================================
 // 🗺️ KARTE INITIALISIEREN
