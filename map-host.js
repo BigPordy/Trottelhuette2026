@@ -243,6 +243,7 @@ btnNextRound.onclick = () => {
   currentTarget = null;
 
   currentRoundId++;
+  loadRound(currentRoundId);
 
   resultPanel.classList.add("hidden");
   resultList.innerHTML = "";
