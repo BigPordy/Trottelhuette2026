@@ -1,7 +1,3 @@
-let currentRoundId = 1;
-let currentRound = null; // enthält question (ohne Ziel!)
-
-
 // ======================================
 // 🔧 SUPABASE INITIALISIERUNG (TEAM)
 // ======================================
@@ -10,6 +6,19 @@ const supabaseClient = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
+
+
+// ======================================
+// 🧠 GLOBALE ZUSTÄNDE
+// ======================================
+
+let currentTeamId = null;
+let currentRoundId = 1;
+let currentRound = null;
+
+let currentRoundId = 1;
+let currentRound = null; // enthält question (ohne Ziel!)
+
 // ================================
 // 📦 RUNDE AUS DB LADEN (TEAM)
 // ================================
