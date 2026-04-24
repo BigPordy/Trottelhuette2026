@@ -48,13 +48,6 @@ async function loadTeams() {
   });
 }
 
-async function initHost() {
-  await loadTeams();
-  await loadRound(currentRoundId);
-}
-
-initHost();
-
 // ======================================
 // 🧠 GLOBALER SPIELZUSTAND
 // ======================================
@@ -65,6 +58,13 @@ let teamMap = {}; // team_id → team_name
 let currentRoundId = 1;
 let currentRound = null; // enthält question, target_lat/lng
 const TOTAL_MAP_ROUNDS = 8;
+
+async function initHost() {
+  await loadTeams();
+  await loadRound(currentRoundId);
+}
+
+initHost();
 
 // ======================================
 // 🗺️ KARTE INITIALISIEREN
@@ -260,8 +260,10 @@ loadRound(currentRoundId);
   resultList.innerHTML = "";
 
   btnNextRound.classList.add("hidden");
-  btnShowPins.classList.remove("hidden");
-  
+  btnShowPins.classList.remove("hidden"); 
+
+};
+
 // ======================================
 // 💾 MAP-PUNKTE ZUM GESAMTSCORE ADDIEREN
 // ======================================
@@ -312,8 +314,6 @@ async function applyMapScoreToTotal() {
     .update({ scores_applied: true })
     .eq("id", currentRoundId);
 }
-};
-loadRound(currentRoundId);
 
 // ======================================
 // 🏁 MAP-MODUS BEENDEN
@@ -329,7 +329,6 @@ async function finishMapMode() {
   targetLayer.clearLayers();
 
   // … Map-Ergebnis anzeigen …
-}
 
   btnNextRound.classList.add("hidden");
   btnShowPins.classList.add("hidden");
@@ -365,7 +364,8 @@ async function finishMapMode() {
 
   resultPanel.classList.remove("hidden"); 
   btnShowTotalScore.classList.remove("hidden");
-  
+  }
+
 // ======================================
 // 🧮 GESAMTSPIELSTAND ANZEIGEN
 // ======================================
