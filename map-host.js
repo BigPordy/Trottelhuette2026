@@ -48,13 +48,17 @@ async function loadTeams() {
   });
 }
 
-// einmalig ausführen
-loadTeams();
+async function initHost() {
+  await loadTeams();
+  await loadRound(currentRoundId);
+}
+
+initHost();
+
 // ======================================
 // 🧠 GLOBALER SPIELZUSTAND
 // ======================================
 
-let currentRoundId = 1;
 let currentPins = [];      // Team-Pins dieser Runde
 let currentTarget = null;  // Zielkoordinaten dieser Runde
 let teamMap = {}; // team_id → team_name
