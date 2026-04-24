@@ -261,7 +261,57 @@ loadRound(currentRoundId);
 
   btnNextRound.classList.add("hidden");
   btnShowPins.classList.remove("hidden");
+  
+// ======================================
+// 💾 MAP-PUNKTE ZUM GESAMTSCORE ADDIEREN
+// ======================================
 
+async function applyMapScoreToTotal() {
+
+  // prüfen, ob Punkte schon addiert wurden
+  const { data: roundMeta } = await supabaseClient
+    .from("map_rounds")
+    .select("scores_applied")
+    .eq("id", currentRoundId)
+    .single();
+
+  if (roundMeta?.scores_applied) {
+    console.log("Map-Punkte wurden bereits addiert.");
+    return;
+  }
+
+  // Map-Scores laden
+  const { data: mapScores } = await supabaseClient
+    .from("map_scores")
+    .select("team_id, points");
+
+  const mapSum = {};
+  mapScores.forEach(row => {
+    mapSum[row.team_id] = (mapSum[row.team_id] || 0) + row.points;
+  });
+
+  // Punkte zu team_scores addieren
+  for (const [teamId, points] of Object.entries(mapSum)) {
+    const { data: teamRow } = await supabaseClient
+      .from("team_scores")
+      .select("score")
+      .eq("team_id", teamId)
+      .single();
+
+    const newScore = (teamRow?.score || 0) + points;
+
+    await supabaseClient
+      .from("team_scores")
+      .update({ score: newScore })
+      .eq("team_id", teamId);
+  }
+
+  // als angewendet markieren
+  await supabaseClient
+    .from("map_rounds")
+    .update({ scores_applied: true })
+    .eq("id", currentRoundId);
+}
 };
 loadRound(currentRoundId);
 
@@ -313,57 +363,7 @@ async function finishMapMode() {
   document.getElementById("questionText").textContent =
     "🏁 Map‑Modus beendet – Ergebnis";
 
-  resultPanel.classList.remove("hidden");
-  
-// ======================================
-// 💾 MAP-PUNKTE ZUM GESAMTSCORE HINZUFÜGEN
-// ======================================
-
-async function applyMapScoreToTotal() {
-
-  // 1️⃣ Prüfen, ob bereits angewendet
-  const { data: roundMeta } = await supabaseClient
-    .from("map_rounds")
-    .select("scores_applied")
-    .eq("id", currentRoundId)
-    .single();
-
-  if (roundMeta?.scores_applied) {
-    console.log("Map-Punkte wurden bereits addiert.");
-    return;
-  }
-
-  // 2️⃣ Map-Punkte aufsummieren
-  const { data: mapScores } = await supabaseClient
-    .from("map_scores")
-    .select("team_id, points");
-
-  const mapSum = {};
-  mapScores.forEach(row => {
-    mapSum[row.team_id] = (mapSum[row.team_id] || 0) + row.points;
-  });
-
-  // 3️⃣ Gesamtpunkte aktualisieren
-  for (const [teamId, points] of Object.entries(mapSum)) {
-    await supabaseClient
-      .from("team_scores")
-      .update({
-        score: supabaseClient.rpc("increment", {
-          x: points
-        })
-      })
-      .eq("team_id", teamId);
-  }
-
-  // 4️⃣ Runde als abgeschlossen markieren
-  await supabaseClient
-    .from("map_rounds")
-    .update({ scores_applied: true })
-    .eq("id", currentRoundId);
-
-  console.log("✅ Map-Punkte erfolgreich zum Gesamtscore addiert");
-}
-  
+  resultPanel.classList.remove("hidden"); 
   btnShowTotalScore.classList.remove("hidden");
   
 // ======================================
