@@ -128,16 +128,44 @@ map.on("click", (e) => {
 
 const btnSubmitPin = document.getElementById("btnSubmitPin");
 
-btnSubmitPin.onclick = () => {
-  map.off("click"); // Karte sperren
+btnSubmitPin.onclick = async () => {
 
+  // 🔒 Sicherheitschecks
+  if (!currentTeamId) {
+    alert("Bitte zuerst ein Team auswählen.");
+    return;
+  }
+
+  if (!teamMarker) {
+    alert("Bitte zuerst einen Pin setzen.");
+    return;
+  }
+
+  const { lat, lng } = teamMarker.getLatLng();
+
+  // ✅ Pin in DB speichern (oder überschreiben)
+  const { error } = await supabaseClient
+    .from("map_pins")
+    .upsert({
+      round_id: currentRoundId,
+      team_id: currentTeamId,
+      lat,
+      lng
+    });
+
+  if (error) {
+    console.error("Fehler beim Speichern des Pins:", error);
+    alert("Pin konnte nicht gespeichert werden.");
+    return;
+  }
+
+  // ✅ UI sperren
+  map.off("click");
   btnSubmitPin.classList.add("hidden");
   document.getElementById("pinHint").classList.add("hidden");
   document.getElementById("waitMessage").classList.remove("hidden");
-
-  // später hier:
-  // Pin in DB speichern (Supabase)
 };
+
 // ======================================
 // ▶️ INITIAL START
 // ======================================
