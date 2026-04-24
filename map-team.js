@@ -144,3 +144,23 @@ btnSubmitPin.onclick = () => {
   // später hier:
   // Pin in DB speichern (Supabase)
 };
+// ======================================
+// ▶️ INITIAL START
+// ======================================
+
+// Teams laden
+loadTeams();
+
+// Erste Runde laden
+loadRound(currentRoundId);
+// ======================================
+// 🔄 RUNDE SYNCHRON HALTEN (Polling)
+// ======================================
+
+setInterval(async () => {
+  const nextRoundId = currentRoundId;
+
+  if (!currentRound || nextRoundId !== currentRound.id) {
+    await loadRound(nextRoundId);
+  }
+}, 3000);
