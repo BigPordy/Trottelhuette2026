@@ -44,6 +44,15 @@ body {
   font-weight: 700;
 }
 
+#teamSelectWrapper {
+  margin-top: 0.6rem;
+}
+
+#teamSelect {
+  margin-top: 0.2rem;
+  padding: 0.3rem;
+  font-size: 1rem;
+}
 
 /* ============================= */
 /* 🗺️ KARTENBEREICH */
