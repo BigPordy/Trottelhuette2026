@@ -352,17 +352,21 @@ async function finishMapMode() {
 
   // Anzeige vorbereiten
   resultList.innerHTML = "";
+ 
+Object.entries(summary)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([teamId, points]) => {
+      const li = document.createElement("li");
+      li.textContent =
+        `${teamMap[teamId] || "Unbekanntes Team"} – ${points} Punkte`;
+      resultList.appendChild(li);
+    });
 
-  Object.entries(summary).forEach(([teamId, points]) => {
-    const li = document.createElement("li");
-    li.textContent = `${teamMap[teamId] || "Unbekanntes Team"} – ${points} Punkte`;
-    resultList.appendChild(li);
-  });
-
+  // ✅ P3.6 – Header & Panel aktualisieren
   document.getElementById("questionText").textContent =
     "🏁 Map‑Modus beendet – Ergebnis";
-
   resultPanel.classList.remove("hidden"); 
+  // ✅ P3.7 – Button für Gesamtspielstand freigeben
   btnShowTotalScore.classList.remove("hidden");
   }
 
