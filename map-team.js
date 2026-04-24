@@ -10,7 +10,31 @@ const supabaseClient = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
+// ================================
+// 📦 RUNDE AUS DB LADEN (TEAM)
+// ================================
 
+async function loadRound(roundId) {
+  const { data, error } = await supabaseClient
+    .from("map_rounds")
+    .select("id, round_index, question")
+    .eq("id", roundId)
+    .single();
+
+  if (error) {
+    console.error("Fehler beim Laden der Runde:", error);
+    return;
+  }
+
+  currentRound = data;
+
+  // ✅ UI aktualisieren
+  document.getElementById("roundCounter").textContent =
+    `Runde ${data.round_index} von 8`;
+
+  document.getElementById("questionText").textContent =
+    `Pinne: ${data.question}`;
+}
 // ================================
 // 🧑‍🤝‍🧑 TEAM-AUSWAHL – ZUSTAND
 // ================================
