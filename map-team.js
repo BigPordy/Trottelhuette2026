@@ -7,7 +7,6 @@ const supabaseClient = window.supabase.createClient(
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
 
-
 // ======================================
 // 🧠 GLOBALE ZUSTÄNDE
 // ======================================
@@ -15,9 +14,6 @@ const supabaseClient = window.supabase.createClient(
 let currentTeamId = null;
 let currentRoundId = 1;
 let currentRound = null;
-
-let currentRoundId = 1;
-let currentRound = null; // enthält question (ohne Ziel!)
 
 // ================================
 // 📦 RUNDE AUS DB LADEN (TEAM)
@@ -85,8 +81,6 @@ teamSelect.onchange = (event) => {
   currentTeamId = event.target.value;
 };
 
-// beim Laden der Seite ausführen
-loadTeams();
 // ================================
 // 🗺️ TEAM-KARTE INITIALISIEREN
 // ================================
@@ -150,9 +144,9 @@ btnSubmitPin.onclick = () => {
 
 // Teams laden
 loadTeams();
-
 // Erste Runde laden
 loadRound(currentRoundId);
+
 // ======================================
 // 🔄 RUNDE SYNCHRON HALTEN (Polling)
 // ======================================
@@ -163,4 +157,4 @@ setInterval(async () => {
   if (!currentRound || nextRoundId !== currentRound.id) {
     await loadRound(nextRoundId);
   }
-}, 3000);
+
