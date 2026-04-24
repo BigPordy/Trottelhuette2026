@@ -368,7 +368,7 @@ Object.entries(summary)
   resultPanel.classList.remove("hidden"); 
   // ✅ P3.7 – Button für Gesamtspielstand freigeben
   btnShowTotalScore.classList.remove("hidden");
-  }
+  
 
 // ======================================
 // 🧮 GESAMTSPIELSTAND ANZEIGEN
