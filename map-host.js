@@ -120,7 +120,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 const btnShowPins = document.getElementById("btnShowPins");
 const btnRevealTarget = document.getElementById("btnRevealTarget");
 const btnNextRound = document.getElementById("btnNextRound");
-
+const btnShowTotalScore = document.getElementById("btnShowTotalScore");
 const resultPanel = document.getElementById("resultPanel");
 const resultList = document.getElementById("resultList");
 
@@ -271,9 +271,15 @@ loadRound(currentRoundId);
 
 async function finishMapMode() {
 
+  // ✅ Map-Punkte JETZT permanent speichern
+  await applyMapScoreToTotal();
+
   // UI aufräumen
   teamPinLayer.clearLayers();
   targetLayer.clearLayers();
+
+  // … Map-Ergebnis anzeigen …
+}
 
   btnNextRound.classList.add("hidden");
   btnShowPins.classList.add("hidden");
@@ -308,8 +314,114 @@ async function finishMapMode() {
     "🏁 Map‑Modus beendet – Ergebnis";
 
   resultPanel.classList.remove("hidden");
+  
+// ======================================
+// 💾 MAP-PUNKTE ZUM GESAMTSCORE HINZUFÜGEN
+// ======================================
 
-  // 👉 HIER kannst du später:
-  // - zum Gesamt‑Zwischenstand wechseln
-  // - oder automatisch den nächsten Spielmodus starten
+async function applyMapScoreToTotal() {
+
+  // 1️⃣ Prüfen, ob bereits angewendet
+  const { data: roundMeta } = await supabaseClient
+    .from("map_rounds")
+    .select("scores_applied")
+    .eq("id", currentRoundId)
+    .single();
+
+  if (roundMeta?.scores_applied) {
+    console.log("Map-Punkte wurden bereits addiert.");
+    return;
+  }
+
+  // 2️⃣ Map-Punkte aufsummieren
+  const { data: mapScores } = await supabaseClient
+    .from("map_scores")
+    .select("team_id, points");
+
+  const mapSum = {};
+  mapScores.forEach(row => {
+    mapSum[row.team_id] = (mapSum[row.team_id] || 0) + row.points;
+  });
+
+  // 3️⃣ Gesamtpunkte aktualisieren
+  for (const [teamId, points] of Object.entries(mapSum)) {
+    await supabaseClient
+      .from("team_scores")
+      .update({
+        score: supabaseClient.rpc("increment", {
+          x: points
+        })
+      })
+      .eq("team_id", teamId);
+  }
+
+  // 4️⃣ Runde als abgeschlossen markieren
+  await supabaseClient
+    .from("map_rounds")
+    .update({ scores_applied: true })
+    .eq("id", currentRoundId);
+
+  console.log("✅ Map-Punkte erfolgreich zum Gesamtscore addiert");
+}
+
+  
+  btnShowTotalScore.classList.remove("hidden");
+  
+// ======================================
+// 🧮 GESAMTSPIELSTAND ANZEIGEN
+// ======================================
+
+btnShowTotalScore.onclick = async () => {
+
+  // 1️⃣ bisherigen Gesamtstand laden
+  const { data: baseScores, error: baseError } = await supabaseClient
+    .from("team_scores")
+    .select("team_id, score");
+
+  if (baseError) {
+    console.error("Fehler beim Laden der Gesamtpunkte:", baseError);
+    return;
+  }
+
+  // 2️⃣ Map‑Punkte laden
+  const { data: mapScores, error: mapError } = await supabaseClient
+    .from("map_scores")
+    .select("team_id, points");
+
+  if (mapError) {
+    console.error("Fehler beim Laden der Map‑Punkte:", mapError);
+    return;
+  }
+
+  // 3️⃣ Map‑Punkte aufsummieren
+  const mapSum = {};
+  mapScores.forEach(row => {
+    mapSum[row.team_id] = (mapSum[row.team_id] || 0) + row.points;
+  });
+
+  // 4️⃣ Gesamtscore berechnen
+  const totalScores = {};
+
+  baseScores.forEach(row => {
+    totalScores[row.team_id] =
+      row.score + (mapSum[row.team_id] || 0);
+  });
+
+  // 5️⃣ Anzeige aktualisieren
+  resultList.innerHTML = "";
+
+  Object.entries(totalScores)
+    .sort((a, b) => b[1] - a[1])   // absteigend
+    .forEach(([teamId, score]) => {
+      const li = document.createElement("li");
+      li.textContent =
+        `${teamMap[teamId] || "Unbekanntes Team"} – ${score} Punkte`;
+      resultList.appendChild(li);
+    });
+
+  document.getElementById("questionText").textContent =
+    "🏆 Gesamtspielstand";
+
+  btnShowTotalScore.classList.add("hidden");
+};
 }
