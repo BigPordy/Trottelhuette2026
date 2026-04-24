@@ -64,6 +64,7 @@ let currentTarget = null;  // Zielkoordinaten dieser Runde
 let teamMap = {}; // team_id → team_name
 let currentRoundId = 1;
 let currentRound = null; // enthält question, target_lat/lng
+const TOTAL_MAP_ROUNDS = 8;
 
 // ======================================
 // 🗺️ KARTE INITIALISIEREN
@@ -246,8 +247,14 @@ btnNextRound.onclick = () => {
   currentPins = [];
   currentTarget = null;
 
-  currentRoundId++;
-  loadRound(currentRoundId);
+ currentRoundId++;
+
+if (currentRoundId > TOTAL_MAP_ROUNDS) {
+  finishMapMode();
+  return;
+}
+
+loadRound(currentRoundId);
 
   resultPanel.classList.add("hidden");
   resultList.innerHTML = "";
@@ -257,3 +264,52 @@ btnNextRound.onclick = () => {
 
 };
 loadRound(currentRoundId);
+
+// ======================================
+// 🏁 MAP-MODUS BEENDEN
+// ======================================
+
+async function finishMapMode() {
+
+  // UI aufräumen
+  teamPinLayer.clearLayers();
+  targetLayer.clearLayers();
+
+  btnNextRound.classList.add("hidden");
+  btnShowPins.classList.add("hidden");
+  btnRevealTarget.classList.add("hidden");
+
+  // ✅ Map-Modus-Ergebnis laden
+  const { data: mapScores, error } = await supabaseClient
+    .from("map_scores")
+    .select("team_id, points");
+
+  if (error) {
+    console.error("Fehler beim Laden der Map-Scores:", error);
+    return;
+  }
+
+  // Punkte pro Team aufsummieren
+  const summary = {};
+  mapScores.forEach(row => {
+    summary[row.team_id] = (summary[row.team_id] || 0) + row.points;
+  });
+
+  // Anzeige vorbereiten
+  resultList.innerHTML = "";
+
+  Object.entries(summary).forEach(([teamId, points]) => {
+    const li = document.createElement("li");
+    li.textContent = `${teamMap[teamId] || "Unbekanntes Team"} – ${points} Punkte`;
+    resultList.appendChild(li);
+  });
+
+  document.getElementById("questionText").textContent =
+    "🏁 Map‑Modus beendet – Ergebnis";
+
+  resultPanel.classList.remove("hidden");
+
+  // 👉 HIER kannst du später:
+  // - zum Gesamt‑Zwischenstand wechseln
+  // - oder automatisch den nächsten Spielmodus starten
+}
