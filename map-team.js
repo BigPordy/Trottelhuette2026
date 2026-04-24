@@ -23,7 +23,7 @@ async function loadRound(roundId) {
   const { data, error } = await supabaseClient
     .from("map_rounds")
     .select("id, round_index, question")
-    .eq("id", roundId)
+    .eq("round_index", roundId)
     .single();
 
   if (error) {
@@ -185,4 +185,4 @@ setInterval(async () => {
   if (!currentRound || nextRoundId !== currentRound.id) {
     await loadRound(nextRoundId);
   }
-
+}, 3000);
