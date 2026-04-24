@@ -6,7 +6,24 @@ const supabaseClient = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
+//Team‑Namen aus der DB laden
+async function loadTeams() {
+  const { data, error } = await supabaseClient
+    .from("teams")
+    .select("id, name");
 
+  if (error) {
+    console.error("Fehler beim Laden der Teams:", error);
+    return;
+  }
+
+  data.forEach(team => {
+    teamMap[team.id] = team.name;
+  });
+}
+
+// einmalig ausführen
+loadTeams();
 // ======================================
 // 🧠 GLOBALER SPIELZUSTAND
 // ======================================
@@ -14,6 +31,8 @@ const supabaseClient = window.supabase.createClient(
 let currentRoundId = 1;
 let currentPins = [];      // Team-Pins dieser Runde
 let currentTarget = null;  // Zielkoordinaten dieser Runde
+let teamMap = {}; // team_id → team_name
+
 
 // ======================================
 // 🗺️ KARTE INITIALISIEREN
@@ -97,7 +116,7 @@ btnShowPins.onclick = async () => {
 
   currentPins.forEach(pin => {
     L.marker([pin.lat, pin.lng])
-      .bindPopup(`Team ${pin.team_id}`)
+      .bindPopup(teamMap[pin.team_id] || "Unbekanntes Team")
       .addTo(teamPinLayer);
   });
 
@@ -173,8 +192,8 @@ btnRevealTarget.onclick = async () => {
 
     const li = document.createElement("li");
     li.textContent =
-      `${index + 1}. Team ${r.team_id} – ` +
-      `${Math.round(r.distance)} km → ${points} Punkte`;
+      `${index + 1}. ${teamMap[r.team_id] || "Unbekanntes Team"} – `
++ `${Math.round(r.distance)} km → ${points} Punkte`;
 
     resultList.appendChild(li);
   });
