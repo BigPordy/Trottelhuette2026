@@ -363,7 +363,6 @@ async function applyMapScoreToTotal() {
 
   console.log("✅ Map-Punkte erfolgreich zum Gesamtscore addiert");
 }
-
   
   btnShowTotalScore.classList.remove("hidden");
   
