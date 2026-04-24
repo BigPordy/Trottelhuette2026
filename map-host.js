@@ -6,6 +6,32 @@ const supabaseClient = window.supabase.createClient(
   "https://havaoqxnxnlmyfbldyic.supabase.co",
   "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
 );
+// ================================
+// 📦 RUNDE AUS DB LADEN (HOST)
+// ================================
+
+async function loadRound(roundId) {
+  const { data, error } = await supabaseClient
+    .from("map_rounds")
+    .select("id, round_index, question, target_lat, target_lng")
+    .eq("id", roundId)
+    .single();
+
+  if (error) {
+    console.error("Fehler beim Laden der Runde:", error);
+    return;
+  }
+
+  currentRound = data;
+
+  // ✅ UI aktualisieren
+  document.getElementById("roundCounter").textContent =
+    `Runde ${data.round_index} von 8`;
+
+  document.getElementById("questionText").textContent =
+    `Gesucht: ${data.question}`;
+}
+
 //Team‑Namen aus der DB laden
 async function loadTeams() {
   const { data, error } = await supabaseClient
@@ -225,3 +251,4 @@ btnNextRound.onclick = () => {
   btnShowPins.classList.remove("hidden");
 
 };
+loadRound(currentRoundId);
