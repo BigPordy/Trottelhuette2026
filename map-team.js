@@ -1,3 +1,7 @@
+let currentRoundId = 1;
+let currentRound = null; // enthält question (ohne Ziel!)
+
+
 // ======================================
 // 🔧 SUPABASE INITIALISIERUNG (TEAM)
 // ======================================
