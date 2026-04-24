@@ -1,4 +1,55 @@
+// ======================================
+// 🔧 SUPABASE INITIALISIERUNG (TEAM)
+// ======================================
 
+const supabaseClient = window.supabase.createClient(
+  "https://havaoqxnxnlmyfbldyic.supabase.co",
+  "sb_publishable_U-UsVeVHSjF0NXZeZ-D4wA_Ly4ZRgH5"
+);
+
+// ================================
+// 🧑‍🤝‍🧑 TEAM-AUSWAHL – ZUSTAND
+// ================================
+
+let currentTeamId = null;
+
+// ================================
+// 🧑‍🤝‍🧑 TEAMS AUS DB LADEN
+// ================================
+
+async function loadTeams() {
+  const { data, error } = await supabaseClient
+    .from("teams")
+    .select("id, name")
+    .order("name");
+
+  if (error) {
+    console.error("Fehler beim Laden der Teams:", error);
+    return;
+  }
+
+  const select = document.getElementById("teamSelect");
+
+  data.forEach(team => {
+    const option = document.createElement("option");
+    option.value = team.id;
+    option.textContent = team.name;
+    select.appendChild(option);
+  });
+}
+
+// ================================
+// ✅ TEAM AUSWÄHLEN
+// ================================
+
+const teamSelect = document.getElementById("teamSelect");
+
+teamSelect.onchange = (event) => {
+  currentTeamId = event.target.value;
+};
+
+// beim Laden der Seite ausführen
+loadTeams();
 // ================================
 // 🗺️ TEAM-KARTE INITIALISIEREN
 // ================================
