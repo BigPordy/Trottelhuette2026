@@ -139,14 +139,19 @@ btnSubmitPin.onclick = async () => {
   const { lat, lng } = teamMarker.getLatLng();
 
   // ✅ Pin in DB speichern (oder überschreiben)
-  const { error } = await supabaseClient
-    .from("map_pins")
-    .upsert({
+const { error } = await supabaseClient
+  .from("map_pins")
+  .upsert(
+    {
       round_id: currentRoundId,
       team_id: currentTeamId,
       lat,
       lng
-    });
+    },
+    {
+      onConflict: "round_id,team_id"
+    }
+  );
 
   if (error) {
     console.error("Fehler beim Speichern des Pins:", error);
