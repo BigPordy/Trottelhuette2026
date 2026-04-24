@@ -143,7 +143,7 @@ const { error } = await supabaseClient
   .from("map_pins")
   .upsert(
     {
-      round_id: currentRoundId,
+      round_id: currentRound.id,
       team_id: currentTeamId,
       lat,
       lng
