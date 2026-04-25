@@ -26,7 +26,7 @@ async function loadBoard() {
 
   questions = data;
   renderBoard();
-  checkIfFinished(); // ✅ DIESE ZEILE HINZUFÜGEN
+  checkIfFinished();
 }
 
 // ===============================
@@ -37,26 +37,27 @@ function renderBoard() {
   board.innerHTML = "";
 
   questions.forEach(q => {
-    const div = document.createElement("div");
-    div.className = "cell" + (q.used ? " used" : "");
-    div.textContent = q.used ? "" : q.value;
+    const cell = document.createElement("div");
+    cell.className = "cell" + (q.used ? " used" : "");
+    cell.textContent = q.used ? "" : q.value;
 
     if (!q.used) {
-      div.onclick = () => openQuestion(q);
+      cell.onclick = () => openQuestion(q);
     }
 
-    board.appendChild(div);
+    board.appendChild(cell);
   });
 }
 
 // ===============================
-// 🏁 PRÜFEN, OB ALLE FRAGEN GESPIELT
+// 🏁 CHECK: ALLE FRAGEN GESPIELT?
 // ===============================
 function checkIfFinished() {
   const remaining = questions.filter(q => !q.used).length;
 
   if (remaining === 0) {
-    document.getElementById("btnFinalScore").style.display = "inline-block";
+    const btn = document.getElementById("btnFinalScore");
+    if (btn) btn.style.display = "inline-block";
   }
 }
 
@@ -97,11 +98,16 @@ async function openQuestion(q) {
 async function markCorrect() {
   const teamId = document.getElementById("teamSelect").value;
 
-  const { data: scoreRow } = await supabase
+  const { data: scoreRow, error } = await supabase
     .from("team_scores")
     .select("score")
     .eq("team_id", teamId)
     .single();
+
+  if (error) {
+    console.error("Fehler beim Laden des Scores:", error);
+    return;
+  }
 
   const newScore = (scoreRow?.score || 0) + currentQuestion.points;
 
@@ -160,7 +166,9 @@ async function showFinalScore() {
     .select("id, name");
 
   const teamMap = {};
-  teams.forEach(t => teamMap[t.id] = t.name);
+  teams.forEach(t => {
+    teamMap[t.id] = t.name;
+  });
 
   const list = document.getElementById("finalScoreList");
   list.innerHTML = "";
@@ -169,11 +177,11 @@ async function showFinalScore() {
     .sort((a, b) => (b.score || 0) - (a.score || 0))
     .forEach(row => {
       const li = document.createElement("li");
-      li.textContent =
-        `${teamMap[row.team_id] || "Unbekanntes Team"} – ${row.score || 0} Punkte`;
+      li.textContent = `${teamMap[row.team_id] || "Unbekanntes Team"} – ${row.score || 0} Punkte`;
       list.appendChild(li);
     });
 }
+
 // ===============================
 // 🚀 START
 // ===============================
