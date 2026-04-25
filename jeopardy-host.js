@@ -26,6 +26,7 @@ async function loadBoard() {
 
   questions = data;
   renderBoard();
+  checkIfFinished(); // ✅ DIESE ZEILE HINZUFÜGEN
 }
 
 // ===============================
@@ -46,6 +47,17 @@ function renderBoard() {
 
     board.appendChild(div);
   });
+}
+
+// ===============================
+// 🏁 PRÜFEN, OB ALLE FRAGEN GESPIELT
+// ===============================
+function checkIfFinished() {
+  const remaining = questions.filter(q => !q.used).length;
+
+  if (remaining === 0) {
+    document.getElementById("btnFinalScore").style.display = "inline-block";
+  }
 }
 
 // ===============================
@@ -164,6 +176,43 @@ async function showFinalScore() {
     });
 }
 
+// ===============================
+// 🏆 FINAL-SCORE ANZEIGEN
+// ===============================
+async function showFinalScore() {
+  document.getElementById("board").style.display = "none";
+  document.getElementById("questionView").style.display = "none";
+  document.getElementById("btnFinalScore").style.display = "none";
+  document.getElementById("finalScoreView").style.display = "block";
+
+  const { data: scores, error } = await supabase
+    .from("team_scores")
+    .select("team_id, score");
+
+  if (error) {
+    console.error("Fehler beim Laden der Scores:", error);
+    return;
+  }
+
+  const { data: teams } = await supabase
+    .from("teams")
+    .select("id, name");
+
+  const teamMap = {};
+  teams.forEach(t => teamMap[t.id] = t.name);
+
+  const list = document.getElementById("finalScoreList");
+  list.innerHTML = "";
+
+  scores
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
+    .forEach(row => {
+      const li = document.createElement("li");
+      li.textContent =
+        `${teamMap[row.team_id] || "Unbekanntes Team"} – ${row.score || 0} Punkte`;
+      list.appendChild(li);
+    });
+}
 // ===============================
 // 🚀 START
 // ===============================
