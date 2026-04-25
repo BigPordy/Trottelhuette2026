@@ -100,8 +100,50 @@
   </div>
 </div>
 
+  <h1>🎯 Jeopardy – Host</h1>
+
+<!-- BOARD -->
+<div id="board" class="grid"></div>
+
+<!-- QUESTION VIEW -->
+<div id="questionView">
+  <div id="questionText"></div>
+
+  <div>
+    <select id="teamSelect"></select>
+  </div>
+
+  <div>
+    <button class="correct" onclick="markCorrect()">✅ Richtig</button>
+    <button class="wrong" onclick="markWrong()">❌ Falsch</button>
+  </div>
+</div>
+
+<!-- ✅ HIER STARTET DER NEUE TEIL -->
+
+<!-- FINAL BUTTON -->
+<div style="text-align:center; margin-top: 30px;">
+  <button id="btnFinalScore"
+          style="display:none;"
+          onclick="showFinalScore()">
+    🏆 Rundenscore & Gesamtspielstand – Dummenpärchen 2026
+  </button>
+</div>
+
+<!-- FINAL SCORE VIEW -->
+<div id="finalScoreView"
+     style="display:none; text-align:center; margin-top:40px;">
+  <h2>🏆 Gesamtspielstand – Dummenpärchen 2026</h2>
+  <ul id="finalScoreList"
+      style="list-style:none; padding:0; font-size:22px;"></ul>
+</div>
+
+<!-- ✅ HIER ENDET DER NEUE TEIL -->
+
+<script src="jeopardy-host.js"></script>
+</body>
+
 <!-- APP -->
 <script src="jeopardy-host.js"></script>
 </body>
 </html>
-``
