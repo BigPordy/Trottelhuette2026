@@ -137,45 +137,6 @@ async function closeQuestion() {
   loadBoard();
 }
 
-async function showFinalScore() {
-  // UI umschalten
-  document.getElementById("board").style.display = "none";
-  document.getElementById("questionView").style.display = "none";
-  document.getElementById("btnFinalScore").style.display = "none";
-  document.getElementById("finalScoreView").style.display = "block";
-
-  // Scores laden
-  const { data: scores, error } = await supabase
-    .from("team_scores")
-    .select("team_id, score");
-
-  if (error) {
-    console.error("Fehler beim Laden der Scores:", error);
-    return;
-  }
-
-  // Teamnamen laden
-  const { data: teams } = await supabase
-    .from("teams")
-    .select("id, name");
-
-  const teamMap = {};
-  teams.forEach(t => teamMap[t.id] = t.name);
-
-  // Anzeige bauen
-  const list = document.getElementById("finalScoreList");
-  list.innerHTML = "";
-
-  scores
-    .sort((a, b) => (b.score || 0) - (a.score || 0))
-    .forEach(row => {
-      const li = document.createElement("li");
-      li.textContent =
-        `${teamMap[row.team_id] || "Unbekanntes Team"} – ${row.score || 0} Punkte`;
-      list.appendChild(li);
-    });
-}
-
 // ===============================
 // 🏆 FINAL-SCORE ANZEIGEN
 // ===============================
