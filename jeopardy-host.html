@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jeopardy – Host</title>
+
+  <!-- Supabase -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .cell {
+      background: #1e293b;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 10px;
+      font-size: 22px;
+      font-weight: bold;
+      user-select: none;
+    }
+
+    .cell.used {
+      background: #334155;
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #questionView {
+      display: none;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    #questionText {
+      font-size: 28px;
+      margin-bottom: 30px;
+    }
+
+    select, button {
+      font-size: 18px;
+      padding: 10px 16px;
+      margin: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .correct {
+      background: #16a34a;
+      color: white;
+    }
+
+    .wrong {
+      background: #dc2626;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🎯 Jeopardy – Host</h1>
+
+<!-- BOARD -->
+<div id="board" class="grid"></div>
+
+<!-- QUESTION VIEW -->
+<div id="questionView">
+  <div id="questionText"></div>
+
+  <div>
+    <select id="teamSelect"></select>
+  </div>
+
+  <div>
+    <button class="correct" onclick="markCorrect()">✅ Richtig</button>
+    <button class="wrong" onclick="markWrong()">❌ Falsch</button>
+  </div>
+</div>
+
+<!-- APP -->
+<script src="jeopardy-host.js"></script>
+</body>
+</html>
+``
