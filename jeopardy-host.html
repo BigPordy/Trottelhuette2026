@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Jeopardy – Host</title>
 
-  <!-- Supabase -->
+  <!-- Supabase Client -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <style>
@@ -16,7 +16,7 @@
       padding: 20px;
     }
 
-    h1 {
+    h1, h2 {
       text-align: center;
     }
 
@@ -83,10 +83,14 @@
 
 <h1>🎯 Jeopardy – Host</h1>
 
-<!-- BOARD -->
+<!-- ===================== -->
+<!-- JEOPARDY BOARD -->
+<!-- ===================== -->
 <div id="board" class="grid"></div>
 
+<!-- ===================== -->
 <!-- QUESTION VIEW -->
+<!-- ===================== -->
 <div id="questionView">
   <div id="questionText"></div>
 
@@ -100,50 +104,33 @@
   </div>
 </div>
 
-  <h1>🎯 Jeopardy – Host</h1>
-
-<!-- BOARD -->
-<div id="board" class="grid"></div>
-
-<!-- QUESTION VIEW -->
-<div id="questionView">
-  <div id="questionText"></div>
-
-  <div>
-    <select id="teamSelect"></select>
-  </div>
-
-  <div>
-    <button class="correct" onclick="markCorrect()">✅ Richtig</button>
-    <button class="wrong" onclick="markWrong()">❌ Falsch</button>
-  </div>
-</div>
-
-<!-- ✅ HIER STARTET DER NEUE TEIL -->
-
+<!-- ===================== -->
 <!-- FINAL BUTTON -->
-<div style="text-align:center; margin-top: 30px;">
-  <button id="btnFinalScore"
-          style="display:none;"
-          onclick="showFinalScore()">
-    🏆 Rundenscore & Gesamtspielstand – Dummenpärchen 2026
+<!-- ===================== -->
+<div style="text-align:center; margin-top:30px;">
+  <button
+    id="btnFinalScore"
+    style="display:none;"
+    onclick="showFinalScore()">
+    🏆 Rundenscore &amp; Gesamtspielstand – Dummenpärchen 2026
   </button>
 </div>
 
+<!-- ===================== -->
 <!-- FINAL SCORE VIEW -->
-<div id="finalScoreView"
-     style="display:none; text-align:center; margin-top:40px;">
-  <h2>🏆 Gesamtspielstand – Dummenpärchen 2026</h2>
-  <ul id="finalScoreList"
-      style="list-style:none; padding:0; font-size:22px;"></ul>
+<!-- ===================== -->
+<div id="finalScoreView" style="display:none; text-align:center; margin-top:40px;">
+  <h2>🏆 Gesamtspielstand – Dummenpärchen 2026</h2>
+  <ul
+    id="finalScoreList"
+    style="list-style:none; padding:0; font-size:22px;">
+  </ul>
 </div>
 
-<!-- ✅ HIER ENDET DER NEUE TEIL -->
-
+<!-- ===================== -->
+<!-- APP SCRIPT -->
+<!-- ===================== -->
 <script src="jeopardy-host.js"></script>
-</body>
 
-<!-- APP -->
-<script src="jeopardy-host.js"></script>
 </body>
 </html>
